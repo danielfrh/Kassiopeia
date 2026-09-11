@@ -2,6 +2,8 @@ option (Kassiopeia_ENABLE_APP "Build Kassiopeia applications" ON)
 if (Kassiopeia_ENABLE_APP)
 
     set( APPLICATIONS_FIELDS_BASENAMES
+        FieldCalculator
+
         SimpleElectricFieldCalculator
         SimpleElectricFieldCalculatorAlongZaxis
         SimpleElectricFieldCalculatorAlongFieldline
