@@ -129,7 +129,6 @@ if (CMAKE_BUILD_TYPE MATCHES Rel)
     if( COMPILER_TUNE_OPTIONS )
         # These are advanced options for GCC which might improve performance ... or break everything - use with care!
         add_compile_options( -march=native -mfpmath=sse -funroll-loops )
-        #add_compile_options( -march=native -funroll-loops -mtune=native -finline-functions -ftree-vectorize )
     endif( COMPILER_TUNE_OPTIONS )
 endif()
 
