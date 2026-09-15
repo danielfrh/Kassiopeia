@@ -128,10 +128,10 @@ if (CMAKE_BUILD_TYPE MATCHES Rel)
     mark_as_advanced(COMPILER_TUNE_OPTIONS)
     if( COMPILER_TUNE_OPTIONS )
         # These are advanced options for GCC / Clang which might improve performance
-        #add_compile_options( -march=native -mfpmath=sse -funroll-loops )
+        add_compile_options( -march=native -mfpmath=sse -funroll-loops )
         #add_compile_options( -march=native -funroll-loops -mtune=native -finline-functions -ftree-vectorize )
         # https://www.phoronix.com/news/Apple-M4-Added-To-LLVM-Clang
-        add_compile_options( -mcpu=apple-m4 -mtune=native -funroll-loops )
+        #add_compile_options( -mcpu=apple-m4 -mtune=native -funroll-loops )
     endif( COMPILER_TUNE_OPTIONS )
 endif()
 
