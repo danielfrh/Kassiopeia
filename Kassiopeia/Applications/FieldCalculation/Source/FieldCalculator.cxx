@@ -233,13 +233,13 @@ int main(int argc, char** argv)
                     //BField = magfieldCoils.MagneticField(pos);
                     //BField = integratingFieldSolver.MagneticField(pos);
 
-                    mainmsg( eDebug ) << "position: " << it1PointSets.theResultVector.at(j).myPosition << eom;
+                    mainmsg( eDebug ) << "position: " << it1PointSets.theResultVector[j].myPosition << eom;
         
-                    tFieldObject->CalculateField(it1PointSets.theResultVector.at(j).myPosition, 0.0, tMagneticField);
+                    tFieldObject->CalculateField(it1PointSets.theResultVector[j].myPosition, 0.0, tMagneticField);
                     //tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
                     
                     // store field value to vector
-                    it1PointSets.theResultVector.at(j).myField = tMagneticField;
+                    it1PointSets.theResultVector[j].myField = tMagneticField;
 
                     // for (int j = 0; j <= 2; j++) {
                     //     n[j] = -BField[j] / b;
@@ -251,7 +251,7 @@ int main(int argc, char** argv)
                 {
                     int tIndex = 0;
                     mainmsg(eWarning) << "> error processing index <" << tIndex << "> - cannot calculate field at position <"
-                        << it1PointSets.theResultVector.at(j).myPosition << ">" << eom;
+                        << it1PointSets.theResultVector[j].myPosition << ">" << eom;
                     continue;
                 } // catch
 
@@ -279,13 +279,13 @@ int main(int argc, char** argv)
             file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
 
             for (unsigned int m = 0; m < it1PointSets.theResultVector.size(); m++) {
-                file1 << m << "\t" << it1PointSets.theResultVector.at(m).myPosition.GetX() << "\t"
-                << it1PointSets.theResultVector.at(m).myPosition.GetY() << "\t"
-                << it1PointSets.theResultVector.at(m).myPosition.GetZ() << "\t"
-                << it1PointSets.theResultVector.at(m).myField.GetX() << "\t"
-                << it1PointSets.theResultVector.at(m).myField.GetY() << "\t"
-                << it1PointSets.theResultVector.at(m).myField.GetZ() << "\t"
-                << it1PointSets.theResultVector.at(m).myField.Magnitude() << "\n";
+                file1 << m << "\t" << std::scientific << std::setprecision(16)<< it1PointSets.theResultVector[m].myPosition[0] << "\t"
+                << it1PointSets.theResultVector[m].myPosition[1] << "\t"
+                << it1PointSets.theResultVector[m].myPosition[2] << "\t"
+                << it1PointSets.theResultVector[m].myField[0] << "\t"
+                << it1PointSets.theResultVector[m].myField[1] << "\t"
+                << it1PointSets.theResultVector[m].myField[2] << "\t"
+                << it1PointSets.theResultVector[m].myField.Magnitude() << "\n";
             }
 
         outputFile->Close();
