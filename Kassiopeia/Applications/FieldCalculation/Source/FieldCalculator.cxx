@@ -140,6 +140,8 @@ int main(int argc, char** argv)
     KMessageTable::GetInstance().SetPrecision( 9 );
     cout.precision( 9 );
 
+    bool writeToFiles = true;
+
     // initialize magnetic field
     vector<KSMagneticField*> tMagneticFields;
 
@@ -271,24 +273,28 @@ int main(int argc, char** argv)
 
             //const char* env_p = std::getenv("HOME");
 
-            katrin::KTextFile* outputFile = katrin::KTextFile::CreateOutputTextFile("./" , string(it1PointSets.GetName()+".csv"));
-            mainmsg(eNormal) << "WRITING results to file " << outputFile->GetDefaultPath() << "/" << outputFile->GetDefaultBase() << eom;
-            mainmsg( eNormal) << "label: " << it1PointSets.GetName() << eom;
-            outputFile->Open(KFile::eWrite);
-            fstream& file1=*(outputFile->File());
-            file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
+            if( writeToFiles ) {
 
-            for (unsigned int m = 0; m < it1PointSets.theResultVector.size(); m++) {
-                file1 << m << "\t" << std::scientific << std::setprecision(16)<< it1PointSets.theResultVector[m].myPosition[0] << "\t"
-                << it1PointSets.theResultVector[m].myPosition[1] << "\t"
-                << it1PointSets.theResultVector[m].myPosition[2] << "\t"
-                << it1PointSets.theResultVector[m].myField[0] << "\t"
-                << it1PointSets.theResultVector[m].myField[1] << "\t"
-                << it1PointSets.theResultVector[m].myField[2] << "\t"
-                << it1PointSets.theResultVector[m].myField.Magnitude() << "\n";
-            }
+                katrin::KTextFile* outputFile = katrin::KTextFile::CreateOutputTextFile("./" , string(it1PointSets.GetName()+".csv"));
+                mainmsg(eNormal) << "WRITING results to file " << outputFile->GetDefaultPath() << "/" << outputFile->GetDefaultBase() << eom;
+                mainmsg( eNormal) << "label: " << it1PointSets.GetName() << eom;
+                outputFile->Open(KFile::eWrite);
+                fstream& file1=*(outputFile->File());
+                file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
 
-        outputFile->Close();
+                for (unsigned int m = 0; m < it1PointSets.theResultVector.size(); m++) {
+                    file1 << m << "\t" << std::scientific << std::setprecision(16) << it1PointSets.theResultVector[m].myPosition[0] << "\t"
+                    << it1PointSets.theResultVector[m].myPosition[1] << "\t"
+                    << it1PointSets.theResultVector[m].myPosition[2] << "\t"
+                    << it1PointSets.theResultVector[m].myField[0] << "\t"
+                    << it1PointSets.theResultVector[m].myField[1] << "\t"
+                    << it1PointSets.theResultVector[m].myField[2] << "\t"
+                    << it1PointSets.theResultVector[m].myField.Magnitude() << "\n";
+                }
+
+                outputFile->Close();
+
+            } // if-write to files
         } // point set
     } // for - loop over tFieldObjects
 
