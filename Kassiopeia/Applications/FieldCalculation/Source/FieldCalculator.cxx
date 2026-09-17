@@ -111,7 +111,7 @@ void fieldPoints::ComputeFieldPoints2dim( /*unsigned int noPoints, KThreeVector 
 int main(int argc, char** argv)
 {
 
-    cout << "(06.08.2026) FieldCalculator: Linear field calculation with N dimensional output to text file, config field configs within XML file." << endl;
+    cout << "(16.09.2026) FieldCalculator: Linear field calculation with N dimensional output to text file, config field configs within XML file." << endl;
     cout << "usage: ./FieldCalculator <config_file.xml> <N dimensions: 1 or 2> <magnetic_field_name1> [<magnetic_field_name2> <...>] " << endl << endl;
 
     if (argc < 4) {
@@ -130,15 +130,15 @@ int main(int argc, char** argv)
     tParameters.pop_front();  // strip off config file name
 
     istringstream Converter(tParameters[0]);
-    unsigned int myDimension( 0 );
+    unsigned int myDimension( 1 );
     Converter >> myDimension;
 
     // -----------------------
     // computation of magnetic field vectors with time measurement
     // -----------------------
 
-    KMessageTable::GetInstance().SetPrecision( 9 );
-    cout.precision( 9 );
+    KMessageTable::GetInstance().SetPrecision( 16 );
+    cout.precision( 16 );
 
     bool writeToFiles = true;
 
@@ -158,6 +158,8 @@ int main(int argc, char** argv)
     // ----
 
     uint64 tStartTime( 0 );
+    uint64 tStopTime( 0 );
+    uint64 tTimeSum( 0 );
 
     // ----------------------------------
     // for-loop over tFieldObjects
@@ -191,7 +193,6 @@ int main(int argc, char** argv)
         KThreeVector endpointRemote(0., 0.095, 0.025);
         unsigned int scaleRemote( 1e7 );
 
-        
 
         fieldPoints fieldConfigOnAxis( "Fields-OnAxis", myDimension, scaleOnAxis, startpointOnAxis, endpointOnAxis );
         fieldPoints fieldConfigOffAxis( "Fields-OffAxis", myDimension, scaleOffAxis, startpointOffAxis, endpointOffAxis );
@@ -199,8 +200,8 @@ int main(int argc, char** argv)
 
         // saving different point sets to vector
         std::vector<fieldPoints> pointSets;
-        //pointSets.push_back( fieldConfigOnAxis );
-        //pointSets.push_back( fieldConfigOffAxis );
+        pointSets.push_back( fieldConfigOnAxis );
+        pointSets.push_back( fieldConfigOffAxis );
         pointSets.push_back( fieldConfigRemote );
 
         // ------------------------------
@@ -216,13 +217,13 @@ int main(int argc, char** argv)
 
             // setting composed name with current tFieldObject
             it1PointSets.SetName( tFieldObject->GetName() + it1PointSets.GetName() );
-
-            // setting start time for field config with point set pointSets.at(i)
-            tStartTime = GetTimeMs64();
-            mainmsg( eDebug ) << it1PointSets.theResultVector.size() << "  " << it1PointSets.GetName() << eom;
-
+            
             if(!tFieldObject->IsInitialized()) tFieldObject->Initialize();
 
+            tTimeSum = 0;
+            
+            mainmsg( eDebug ) << it1PointSets.theResultVector.size() << "  " << it1PointSets.GetName() << eom;
+            
             // for-loop over pointSets.at(i)
             for ( unsigned int j = 0; j < it1PointSets.theResultVector.size(); j++)
             {
@@ -231,15 +232,21 @@ int main(int argc, char** argv)
                     //pmagfield->MagfieldElliptic(P, B);
                     //bell=sqrt(B[1]*B[1]+B[2]*B[2]+B[0]*B[0]);
                     //bool zonal = pmagfield->Magfield(P, B);
-
+                    
                     //BField = magfieldCoils.MagneticField(pos);
                     //BField = integratingFieldSolver.MagneticField(pos);
-
+                    
                     mainmsg( eDebug ) << "position: " << it1PointSets.theResultVector[j].myPosition << eom;
-        
+                    
+                    // setting start time for field config with point set pointSets.at(i)
+                    tStartTime = GetTimeMs64();
+
                     tFieldObject->CalculateField(it1PointSets.theResultVector[j].myPosition, 0.0, tMagneticField);
                     //tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
                     
+                    tStopTime = GetTimeMs64();
+
+                    tTimeSum += (tStopTime - tStartTime);
                     // store field value to vector
                     it1PointSets.theResultVector[j].myField = tMagneticField;
 
@@ -259,8 +266,8 @@ int main(int argc, char** argv)
 
             } // for - field single point set
             
-                        mainmsg(eNormal) << "> Elapsed time for field <" << tFieldObject->GetName() << "> and config " << it1PointSets.GetName() << " with " << it1PointSets.theResultVector.size() << " values is <" << GetTimeMs64() - tStartTime << "> ms " << eom;
-                        mainmsg(eNormal) << eom;
+            mainmsg(eNormal) << "> Elapsed time for field <" << tFieldObject->GetName() << "> and config " << it1PointSets.GetName() << " with " << it1PointSets.theResultVector.size() << " values is <" << tTimeSum << "> ms " << eom;
+            mainmsg(eNormal) << eom;
 
             // n.b. for magfield coils the count of computed field points field and used
             // calculation method does not work, instead the values will be summes up and

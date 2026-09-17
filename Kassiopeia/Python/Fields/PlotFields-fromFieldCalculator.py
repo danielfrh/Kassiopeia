@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # Study field lines on lines as calculated and stored by KSC Tool FieldCalculator
-# N.b Plotting heat maps hasn't been impolemented yet.
+# N.b. Plotting heat maps hasn't been implemented yet.
 
 
 import pandas as pd
