@@ -1,6 +1,11 @@
 #include "MagfieldCoils.h"
 #include "KEMSimpleException.hh"
 
+//
+// TIME MEASUREMENT
+//
+#include <ctime>
+#include <sys/time.h>
 
 MagfieldCoils::MagfieldCoils(string inputdirname, string inputobjectname, string inputcoilfilename, int inputNelliptic,
                              int inputnmax, double inputepstol)
@@ -26,6 +31,12 @@ MagfieldCoils::MagfieldCoils(string inputdirname, string inputobjectname, string
     DynamicMemoryAllocations();
     frclimit = 0.99;
     CoilGroupWrite();
+//
+// TIME MEASUREMENT
+//
+    startTime=0;
+    endTime=0;
+    totalTime=0;
     //
     // The following functions compute all the source constants that are needed
     // for the remote, magnetic charge and central Legendre polynomial calculations.
@@ -57,6 +68,32 @@ MagfieldCoils::MagfieldCoils(string inputdirname, string inputobjectname)
     MagsourceRead();
     DynamicMemoryAllocations();
     frclimit = 0.99;
+//
+// TIME MEASUREMENT
+//
+    startTime=0;
+    endTime=0;
+    totalTime=0;
+}
+
+/* Returns the amount of milliseconds elapsed since the UNIX epoch. Works on both
+ * windows and linux. */
+
+uint64 MagfieldCoils::GetTimeMs64( void )
+{
+    /* Linux */
+    struct timeval tv;
+
+    gettimeofday(&tv, nullptr);
+
+    uint64 ret = tv.tv_usec;
+    /* Convert from micro seconds (10^-6) to milliseconds (10^-3) */
+    ret /= 1000;
+
+    /* Adds the seconds (10^0) after converting them to milliseconds (10^-3) */
+    ret += (tv.tv_sec * 1000);
+
+    return ret;
 }
 
 
@@ -64,6 +101,13 @@ MagfieldCoils::MagfieldCoils(string inputdirname, string inputobjectname)
 
 MagfieldCoils::~MagfieldCoils()
 {
+//
+// TIME MEASUREMENT
+//
+    std::cout << "TotalTime ZH3 (ms): " << totalTime << std::endl;
+    std::cout << "No. of terms of Legendre polynomials of central expansion (only for last coil!): " << GetNLegendreCentral() << std::endl;
+    std::cout << "No. of terms of Legendre polynomials of remote expansion (only for last coil): " << GetNLegendreRemote() << std::endl;
+
     // One-dim arrays:
 
     delete[] fC0;
@@ -847,6 +891,10 @@ bool MagfieldCoils::Magfield(const double* P, double* B)
     //   if elliptic integral calc. is used (even for 1 coil): the return value is false.
     double Bgroup[3];
     bool magfield = true;
+    //
+    // TIME MEASUREMENT
+    //
+    startTime=GetTimeMs64();
     for (int k = 0; k < 3; k++)
         B[k] = 0.;
     for (int g = 0; g < fNg; g++) {
@@ -856,6 +904,8 @@ bool MagfieldCoils::Magfield(const double* P, double* B)
         for (int k = 0; k < 3; k++)
             B[k] += Bgroup[k];
     }
+    endTime=GetTimeMs64();
+    totalTime+=(endTime-startTime);
     return magfield;
 }
 
@@ -1508,6 +1558,8 @@ bool MagfieldCoils::Magfield2Remote(bool bcoil, int ig, double z, double r, doub
 // z0, Rorem, ro, u, sr, rc, rcn:
 {
     double z0, Rorem;  // source point and conv. radius
+    nTermsCentral = 0;
+    nTermsRemote = 0;
     if (bcoil == true) {
         z0 = 0.;
         Rorem = frorem[ig];
@@ -1573,6 +1625,7 @@ bool MagfieldCoils::Magfield2Remote(bool bcoil, int ig, double z, double r, doub
         }
         double u2 = u * u;
         double rc2 = rc * rc;
+
         for (int n = 6; n <= fnmax - 1; n += 2) {
             if (bcoil == true)
                 brem = fBrem[ig][n];
@@ -1588,6 +1641,7 @@ bool MagfieldCoils::Magfield2Remote(bool bcoil, int ig, double z, double r, doub
             Br += fBrplus[n];
             double Beps = 1.e-15 * (fabs(Bz) + fabs(Br));
             double Bdelta = fabs(fBzplus[n]) + fabs(fBrplus[n]) + fabs(fBzplus[n - 2]) + fabs(fBrplus[n - 2]);
+
             if (Bdelta < Beps || Bdelta < 1.e-20)
                 break;
         }
@@ -1613,6 +1667,8 @@ bool MagfieldCoils::Magfield2Remote(bool bcoil, int ig, double z, double r, doub
             }
         }
     }
+    // counting the Legendre polynomial terms for the remote expansion
+    nTermsRemote = nlast;
     if (nlast >= fnmax - 2)
         return false;
     else
@@ -1756,7 +1812,7 @@ bool MagfieldCoils::Hfield(int i, double z, double r, double& Hz, double& Hr, do
 /////////////////////////////////////////////////////
 
 // Magnetic field calculation with central zonal harmonic expansion
-//  (local axisymmetric case)
+//  (local axisymmetric case: Magfield>>2<<Central)
 
 bool MagfieldCoils::Magfield2Central(bool bcoil, int ig, int j, double z, double r, double& Bz, double& Br, double& rc)
 // This function computes the magnetic field components Bz and Br at fieldpoint z and r by central expansion,
@@ -1778,6 +1834,8 @@ bool MagfieldCoils::Magfield2Central(bool bcoil, int ig, int j, double z, double
 // z0, Rocen, ro, u, sr, rc, rcn:
 {
     const double mu0 = 4. * M_PI * 1.e-7;
+    nTermsCentral = 0;
+    nTermsRemote = 0;
     double z0, Rocen;  // source point and conv. radius
     if (bcoil == true) {
         z0 = fz0cen[ig][j];
@@ -1827,6 +1885,7 @@ bool MagfieldCoils::Magfield2Central(bool bcoil, int ig, int j, double z, double
     //
     // We start here the central series expansion:
     double bcen;
+
     for (int n = 2; n <= fnmax - 1; n++) {
         if (bcoil == true)
             bcen = fBcen[ig][j][n];
@@ -1852,6 +1911,8 @@ bool MagfieldCoils::Magfield2Central(bool bcoil, int ig, int j, double z, double
                 break;
         }
     }
+    // counting the Legendre polynomial terms for the central expansion
+    nTermsCentral = nlast;
     if (nlast >= fnmax - 1) {
         rc = 1.;
         return false;

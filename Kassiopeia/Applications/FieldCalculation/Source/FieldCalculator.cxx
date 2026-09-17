@@ -186,13 +186,12 @@ int main(int argc, char** argv)
         unsigned int scaleOffAxis( 1e7 );
 
         // field points remote
-//        KThreeVector startpointRemote(0., 0.85, -0.75);
-//        KThreeVector endpointRemote(0., 0.85, 0.75);
-//        unsigned int scaleRemote( 1e6 );
-        KThreeVector startpointRemote(0., 0.095, -0.025);
-        KThreeVector endpointRemote(0., 0.095, 0.025);
-        unsigned int scaleRemote( 1e7 );
-
+        KThreeVector startpointRemote(0., 0.85, -0.75);
+        KThreeVector endpointRemote(0., 0.85, 0.75);
+        unsigned int scaleRemote( 1e6 );
+        //KThreeVector startpointRemote(0., 0.095, -0.025);
+        //KThreeVector endpointRemote(0., 0.095, 0.025);
+        //unsigned int scaleRemote( 1e7 );
 
         fieldPoints fieldConfigOnAxis( "Fields-OnAxis", myDimension, scaleOnAxis, startpointOnAxis, endpointOnAxis );
         fieldPoints fieldConfigOffAxis( "Fields-OffAxis", myDimension, scaleOffAxis, startpointOffAxis, endpointOffAxis );
@@ -201,8 +200,8 @@ int main(int argc, char** argv)
         // saving different point sets to vector
         std::vector<fieldPoints> pointSets;
         pointSets.push_back( fieldConfigOnAxis );
-        pointSets.push_back( fieldConfigOffAxis );
-        pointSets.push_back( fieldConfigRemote );
+        //pointSets.push_back( fieldConfigOffAxis );
+        //pointSets.push_back( fieldConfigRemote );
 
         // ------------------------------
         // for-loop over field point sets

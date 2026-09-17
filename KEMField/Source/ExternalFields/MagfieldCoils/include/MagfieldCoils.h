@@ -14,6 +14,13 @@
 
 using namespace std;
 
+//
+// TIME MEASUREMENT
+//
+/* Remove if already defined */
+typedef long long int64;
+using uint64 = unsigned long long;
+
 
 ////////////////////////////////////
 
@@ -27,6 +34,17 @@ class MagfieldCoils
     bool Magfield(const double* P, double* B);
     void MagfieldElliptic(const double* P, double* B);
     void SetTrackingStart();
+
+    // Getter for number of Legendre polynomials for center and remote expansion
+    unsigned int GetNLegendreCentral( void ) {return nTermsCentral;};
+    unsigned int GetNLegendreRemote( void ) {return nTermsRemote;};
+//
+// TIME MEASUREMENT
+//
+    uint64 GetTimeMs64( void );
+    uint64 startTime;
+    uint64 endTime;
+    uint64 totalTime;
 
   private:
     // MEMBER FUNCTIONS:
@@ -127,6 +145,9 @@ class MagfieldCoils
         fBcenG;  // central source constant: BcenG[g][j][n] (group index g, source point index j, source const. index n)
     int *fjlast, *fjlastG;  // last central source point index for coil and group calculation
     double frclimit;
+
+    unsigned int nTermsRemote;
+    unsigned int nTermsCentral;
 };
 
 
