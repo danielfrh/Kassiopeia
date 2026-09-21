@@ -15,8 +15,15 @@
 using namespace std;
 
 //
-// TIME MEASUREMENT
+// TIME MEASUREMENT ACTIVE: TIMEMEAS=1
+// 
+#define TIMEMEAS 1
+
 //
+// COUNT TERMS OF CENTRAL AND REMOTE EXPANSION (ONLY FOR LAST COIL!) ACTIVE:  LEGPOLY=1
+//
+#define LEGPOLY 1
+
 /* Remove if already defined */
 typedef long long int64;
 using uint64 = unsigned long long;

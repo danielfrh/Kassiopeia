@@ -104,9 +104,20 @@ MagfieldCoils::~MagfieldCoils()
 //
 // TIME MEASUREMENT
 //
+#ifdef TIMEMEAS
+    #if TIMEMEAS == 1
     std::cout << "TotalTime ZH3 (ms): " << totalTime << std::endl;
+    #endif
+#endif
+
+// COUNT OF TERMS OF LEGENDRE POLYNOMIAls
+
+#ifdef LEGPOLY
+    #if LEGPOLY == 1
     std::cout << "No. of terms of Legendre polynomials of central expansion (only for last coil!): " << GetNLegendreCentral() << std::endl;
     std::cout << "No. of terms of Legendre polynomials of remote expansion (only for last coil): " << GetNLegendreRemote() << std::endl;
+    #endif
+#endif
 
     // One-dim arrays:
 
