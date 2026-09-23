@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Study field lines on lines as calculated and stored by KSC Tool FieldCalculator
+# Study field lines on lines as calculated and stored by Application FieldCalculator
 # N.b. Plotting heat maps hasn't been implemented yet.
 
 
@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import sys
 # for int64
 import numpy as np
+
+dimension = 1
+
 
 # Pfad zur Textdatei festlegen
 dateipfad1 = sys.argv[1]

@@ -12,115 +12,28 @@
 #include <cstdlib>
 #include <iostream>
 
-// timing function
-#include <ctime>
-#include <sys/time.h>
+// time measurement, field point generator and field point set reader
+#include "FieldCalculator.h"
 
-/* Remove if already defined */
-typedef long long int64;
-using uint64 = unsigned long long;
-
-/* Returns the amount of milliseconds elapsed since the UNIX epoch. Works on both
- * windows and linux. */
-
-uint64 GetTimeMs64()
-{
-    /* Linux */
-    struct timeval tv;
-
-    gettimeofday(&tv, nullptr);
-
-    uint64 ret = tv.tv_usec;
-    /* Convert from micro seconds (10^-6) to milliseconds (10^-3) */
-    ret /= 1000;
-
-    /* Adds the seconds (10^0) after converting them to milliseconds (10^-3) */
-    ret += (tv.tv_sec * 1000);
-
-    return ret;
-}
-
-using namespace Kassiopeia;
-using namespace katrin;
-using namespace std;
+#define ELECTRIC 0
+#define MAGNETIC 1
 
 
-struct tResult{
-    KThreeVector myPosition;
-    KThreeVector myField;
-};
-
-class fieldPoints{
-    public:
-        fieldPoints( string label, unsigned int dim, unsigned int no, KThreeVector start, KThreeVector end) {
-            completeName=label;calcDimensions=dim;noPoints=no;startPoint=start;endPoint=end;
-            if(noPoints<2) {
-                mainmsg( eWarning ) << "Please note that at least 2 points have to be computed, set noPoints=2." << eom;
-                noPoints = 2;
-            }
-            theResultVector.clear();
-        };
-
-        void ComputeFieldPoints1dim( void );
-        void ComputeFieldPoints2dim( void );
-
-        std::vector<tResult> theResultVector;
-
-        std::string GetName(){return completeName;};
-        void SetName( std::string input ){completeName=input;return;};
-    private:
-        string completeName;
-        unsigned int calcDimensions;
-        unsigned int noPoints;
-        KThreeVector startPoint;
-        KThreeVector endPoint;
-        KThreeVector normalVector;
-};
-
-void fieldPoints::ComputeFieldPoints1dim( void )
-{
-    completeName = completeName + "-1dim";
-
-    // calc normal vector
-    normalVector = (endPoint - startPoint) / (endPoint - startPoint).Magnitude();
-
-    //length of vector
-    double theLength = (endPoint - startPoint).Magnitude()/noPoints;
-
-    tResult temp;
-    KThreeVector empty(0., 0., 0.);
-    KThreeVector calcPoint(0., 0., 0.);
-
-    for(unsigned int i=0; i<=noPoints; i++){
-        calcPoint = startPoint + ( i*theLength*normalVector );
-        
-        temp.myPosition = calcPoint;
-        temp.myField = empty;
-
-        theResultVector.push_back( temp );
-    };
-
-    
-};
-
-void fieldPoints::ComputeFieldPoints2dim( /*unsigned int noPoints, KThreeVector startPoint, KThreeVector endPoint*/ )
-{
-        completeName = completeName + "-2dim";
-};
 
 int main(int argc, char** argv)
 {
-
-    cout << "(16.09.2026) FieldCalculator: Linear field calculation with N dimensional output to text file, config field configs within XML file." << endl;
-    cout << "usage: ./FieldCalculator <config_file.xml> <N dimensions: 1 or 2> <magnetic_field_name1> [<magnetic_field_name2> <...>] " << endl << endl;
+    cout << "FieldCalculator: Field calculation field line / map definition and output to text file (both optional in text files), field configs within XML file." << endl;
+    cout << "output (optional): either field lines or field maps in files which can be processed by Python script PlotFields-fromFieldCalculator.py" << endl;
+    cout << "usage: ./FieldCalculator <config_file.xml> <Computation mode> <Input File> <Write output file (0,1)> <field_name1> [<field_name2> <...>] " << endl << endl;
 
     if (argc < 4) {
         cout << "Missing arguments, program stopped!" << endl;
-        exit(-1); };
+        exit(-1);
+    };
 
-    // --------------
-    // initialization
-    // --------------
+    // ---------------------------------------
+    // initialization and gathering parameters
+    // ---------------------------------------
 
     auto& tXML = KXMLInitializer::GetInstance();
     tXML.AddDefaultIncludePath(CONFIG_DEFAULT_DIR);
@@ -129,89 +42,174 @@ int main(int argc, char** argv)
     deque<string> tParameters = tXML.GetArguments().ParameterList();
     tParameters.pop_front();  // strip off config file name
 
-    istringstream Converter(tParameters[0]);
+    // scale: field points between start- and end point
+    const unsigned int myScale( 1e7 );
+
+    // precision for output of values
+    const unsigned int myPrecision( 16 );
+    KMessageTable::GetInstance().SetPrecision( myPrecision );
+    cout.precision( myPrecision );
+
+    // dimensions: fieldlines (dim 1), field maps (dim 2)
     unsigned int myDimension( 1 );
-    Converter >> myDimension;
 
+    // ------------------------------------------------
+    // define point sets for all fields - tFieldObjects
+    // ------------------------------------------------
+
+    // saving different point sets to vector
+    std::vector<FieldPointGenerator> pointSets;
+
+    mainmsg(eNormal) << "START: Computation of manual defined point sets (containing field point vectors) for all definied fields." << eom;
+
+    // field points on-axis
+    const unsigned int scaleOnAxis( myScale );
+    const unsigned int dimensionOnAxis( myDimension );
+    const KThreeVector startOnAxis(0., 0., -0.75);
+    const KThreeVector endOnAxis(0., 0., 0.75);
+    FieldPointGenerator fieldOnAxis(
+        "Fields-1d1e7-OnAxis",
+        dimensionOnAxis,
+        scaleOnAxis,
+        startOnAxis,
+        endOnAxis
+    );
+    pointSets.push_back( fieldOnAxis );
+
+    // Comparison 1: r=5cm, near z=0, myScale = 1e7 points:
+    const unsigned int scaleComp1OffAxis( myScale );
+    const unsigned int dimensionComp1OffAxis( myDimension );
+    const KThreeVector startComp1OffAxis(0., 0.05, -0.025);
+    const KThreeVector endComp1OffAxis(0., 0.05, 0.025);
+    FieldPointGenerator fieldComp1OffAxis(
+        "Fields-5cm-OffAxis",
+        dimensionComp1OffAxis,
+        scaleComp1OffAxis,
+        startComp1OffAxis,
+        endComp1OffAxis
+    );
+    //pointSets.push_back( fieldComp1OffAxis );
+
+    // Comparison 1: r=9.5cm, near coils, myScale = 1e7 points:
+    const unsigned int scaleComp1Remote( myScale );
+    const unsigned int dimensionComp1Remote( myDimension );
+    const KThreeVector startComp1Remote(0., 0.095, -0.025);
+    const KThreeVector endComp1Remote(0., 0.095, 0.025);
+    FieldPointGenerator fieldComp1Remote(
+        "Fields-10cm-Remote",
+        dimensionComp1Remote,
+        scaleComp1Remote,
+        startComp1Remote,
+        endComp1Remote
+    );
+    //pointSets.push_back( fieldComp1Remote );
+
+    // Comparison 2: r=5cm, near z=0, myScale = 1e7 points:
+    const unsigned int scaleComp2OffAxis( myScale );
+    const unsigned int dimensionComp2OffAxis( myDimension );
+    const KThreeVector startComp2OffAxis(0., 0.05, -0.75);
+    const KThreeVector endComp2OffAxis(0., 0.05, 0.75) ;
+    FieldPointGenerator fieldComp2OffAxis(
+        "Fields-5cm-OffAxis",
+        dimensionComp2OffAxis,
+        scaleComp2OffAxis,
+        startComp2OffAxis,
+        endComp2OffAxis
+    );
+    //pointSets.push_back( fieldComp2OffAxis );
+
+    // Comparison 2: r=9.5cm, near coils, myScale = 1e7 points:
+    const unsigned int scaleComp2Remote( myScale );
+    const unsigned int dimensionComp2Remote( myDimension );
+    const KThreeVector startComp2Remote(0., 0.85, -0.75);
+    const KThreeVector endComp2Remote(0., 0.85, 0.75);
+    FieldPointGenerator fieldComp2Remote(
+        "Fields-10cm-Remote",
+        dimensionComp2Remote,
+        scaleComp2Remote,
+        startComp2Remote,
+        endComp2Remote
+    );
+    //pointSets.push_back( fieldComp2Remote );
+
+    mainmsg(eNormal) << eom << "DONE: Computation of all calculation point vectors for " << pointSets.size()*myScale << " field points" << eom;
+
+
+
+    // file name
+    istringstream Converter(tParameters[1]);
+    const string tInputFileName = Converter.str();
+
+    const string inMode(tParameters[0]);
+    int tMode = stoi(inMode);
+
+    if( tMode==0 ) {
+        myDimension = 1;
+        cout << "define fieldpoint sets manually within source file - 1 Dimension (field lines)" << endl;
+        //FieldPointGenerator gen1();
+    } else if( tMode==1 ) {
+        myDimension = 2;
+        cout << "define fieldpoint sets manually within source file - 2 Dimensions (field maps)" << endl;
+        //FieldPointGenerator gen2();
+    } else if( tMode==2 ) {
+        myDimension = 1;
+        cout << "read one field point set from file - 1 Dimension (field lines) - only 1 dim!" << endl;
+        FieldPointGenerator generatorFromFile( "configfile1", tInputFileName );
+    } else if( tMode==3 ) {
+        // dimension is given in the input file
+        FieldPointSetReader read1( tInputFileName, pointSets);
+    }
+
+    // option to write output file: 0, 1 valid, true, false invalid
+    // By default, std::cin only accepts numeric input for Boolean variables: 0 is false, and 1 is true.
+    // Any other numeric value will be interpreted as true, and will cause
+    // std::cin to enter failure mode. Any non-numeric value will be interpreted as false and will cause std::cin to enter failure mode.    
+    // To convert an integer to a boolean in C++, any non-zero integer will be converted to true,
+    // while zero will be converted to false. This is done implicitly when assigning an integer to a boolean variable.
+    const string inWriteOutputFile(tParameters[2]);
+    const bool writeToFiles = stoi(inWriteOutputFile);
+
+    // initialitzing variables for measurement of computation times
+    uint64 tStartTime( 0 );
+    uint64 tStopTime( 0 );
+    uint64 tTimeSum( 0 );
+
+#ifdef MAGNETIC
+#if MAGNETIC == 1
     // -----------------------
-    // computation of magnetic field vectors with time measurement
+    // init of magnetic fields
     // -----------------------
-
-    KMessageTable::GetInstance().SetPrecision( 16 );
-    cout.precision( 16 );
-
-    bool writeToFiles = true;
 
     // initialize magnetic field
-    vector<KSMagneticField*> tMagneticFields;
+    std::vector<KSMagneticField*> tMagneticFields;
 
-    for (size_t tIndex = 1; tIndex < tParameters.size(); tIndex++) {
+    for (size_t tIndex = 3; tIndex < tParameters.size(); tIndex++) {
         KSMagneticField* tMagneticFieldObject = getMagneticField(tParameters[tIndex]);
         tMagneticFieldObject->Initialize();
         mainmsg(eNormal) << "Initialization of " << tMagneticFieldObject->GetName() << " finished." << eom << eom;
         tMagneticFields.push_back(tMagneticFieldObject);
     }
 
-    // ----
     KThreeVector tMagneticField;
-    // KThreeMatrix tMagneticFieldGradient;
-    // ----
+    // TODO: KThreeVector tElectricField
+    // TODO: KThreeMatrix tMagneticFieldGradient;
+#endif
+#endif
 
-    uint64 tStartTime( 0 );
-    uint64 tStopTime( 0 );
-    uint64 tTimeSum( 0 );
+
+
 
     // ----------------------------------
     // for-loop over tFieldObjects
     // ----------------------------------
     for (auto& tFieldObject : tMagneticFields)
     {
-        // ------------------------------------------------
-        // define point sets for current field tFieldObject
-        // ------------------------------------------------
-
-        mainmsg(eNormal) << "START: Computation of defined point sets (containing point vectors) for field " << tFieldObject->GetName() << eom;
-
-        // field points on-axis
-        KThreeVector startpointOnAxis(0., 0., -0.75);
-        KThreeVector endpointOnAxis(0., 0., 0.75);
-        unsigned int scaleOnAxis( 1e6 );
-
-        // field points off-axis
-//        KThreeVector startpointOffAxis(0., 0.05, -0.75);
-//        KThreeVector endpointOffAxis(0., 0.05, 0.75);
-//        unsigned int scaleOffAxis( 1e6 );
-        KThreeVector startpointOffAxis(0., 0.05, -0.025);
-        KThreeVector endpointOffAxis(0., 0.05, 0.025);
-        unsigned int scaleOffAxis( 1e7 );
-
-        // field points remote
-        KThreeVector startpointRemote(0., 0.85, -0.75);
-        KThreeVector endpointRemote(0., 0.85, 0.75);
-        unsigned int scaleRemote( 1e6 );
-        //KThreeVector startpointRemote(0., 0.095, -0.025);
-        //KThreeVector endpointRemote(0., 0.095, 0.025);
-        //unsigned int scaleRemote( 1e7 );
-
-        fieldPoints fieldConfigOnAxis( "Fields-OnAxis", myDimension, scaleOnAxis, startpointOnAxis, endpointOnAxis );
-        fieldPoints fieldConfigOffAxis( "Fields-OffAxis", myDimension, scaleOffAxis, startpointOffAxis, endpointOffAxis );
-        fieldPoints fieldConfigRemote( "Fields-Remote", myDimension, scaleRemote, startpointRemote, endpointRemote );
-
-        // saving different point sets to vector
-        std::vector<fieldPoints> pointSets;
-        pointSets.push_back( fieldConfigOnAxis );
-        //pointSets.push_back( fieldConfigOffAxis );
-        //pointSets.push_back( fieldConfigRemote );
-
         // ------------------------------
         // for-loop over field point sets
         // ------------------------------
 
         for( auto it1PointSets:pointSets )
         {
-            if(myDimension==1) it1PointSets.ComputeFieldPoints1dim(); // case N=1
-            //if(myDimension==2) wgtsCenter.ComputeFieldPoints2dim(); // N=2
-            mainmsg(eNormal) << eom << "DONE: Computation of " << it1PointSets.theResultVector.size() << " calculation point vectors for " << it1PointSets.GetName() << " and " << eom;
             mainmsg(eNormal) << "START: Computation of fields with config " << it1PointSets.GetName() << " by " << tFieldObject->GetName() << eom;
 
             // setting composed name with current tFieldObject
@@ -289,7 +287,8 @@ int main(int argc, char** argv)
                 file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
 
                 for (unsigned int m = 0; m < it1PointSets.theResultVector.size(); m++) {
-                    file1 << m << "\t" << std::scientific << std::setprecision(16) << it1PointSets.theResultVector[m].myPosition[0] << "\t"
+                    file1 << m << "\t" << std::scientific << std::setprecision( myPrecision )
+                    << it1PointSets.theResultVector[m].myPosition[0] << "\t"
                     << it1PointSets.theResultVector[m].myPosition[1] << "\t"
                     << it1PointSets.theResultVector[m].myPosition[2] << "\t"
                     << it1PointSets.theResultVector[m].myField[0] << "\t"
@@ -310,5 +309,5 @@ int main(int argc, char** argv)
     }
 
     return 0;
-   
+
 };
