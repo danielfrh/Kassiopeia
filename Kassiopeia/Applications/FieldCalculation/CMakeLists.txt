@@ -52,6 +52,7 @@ if (Kassiopeia_ENABLE_APP)
     # data files
     set( APPLICATIONS_FIELDS_DATA_BASENAMES
         FieldCalculator_ExampleFieldPoints.txt
+        FieldCalculator_ExampleFieldPointSets.txt
     )
     set( APPLICATIONS_FIELDS_DATA_PATH
         ${CMAKE_CURRENT_SOURCE_DIR}/Data

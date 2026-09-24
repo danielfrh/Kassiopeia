@@ -11,7 +11,7 @@
 
 #include <cstdlib>
 #include <iostream>
-
+#include <sstream>
 // time measurement, field point generator and field point set reader
 #include "FieldCalculator.h"
 
@@ -19,12 +19,11 @@
 #define MAGNETIC 1
 
 
-
 int main(int argc, char** argv)
 {
     cout << "FieldCalculator: Field calculation field line / map definition and output to text file (both optional in text files), field configs within XML file." << endl;
     cout << "output (optional): either field lines or field maps in files which can be processed by Python script PlotFields-fromFieldCalculator.py" << endl;
-    cout << "usage: ./FieldCalculator <config_file.xml> <Computation mode> <Input File> <Write output file (0,1)> <field_name1> [<field_name2> <...>] " << endl << endl;
+    cout << "usage: ./FieldCalculator <config_file.xml> <Computation Mode> <Input File> <Write output file (0,1)> <field_name1> [<field_name2> <...>] " << endl << endl;
 
     if (argc < 4) {
         cout << "Missing arguments, program stopped!" << endl;
@@ -53,112 +52,112 @@ int main(int argc, char** argv)
     // dimensions: fieldlines (dim 1), field maps (dim 2)
     unsigned int myDimension( 1 );
 
+    // saving different point sets to vector
+    std::vector<FieldPointGenerator> pointSets;
+
+    const string inMode(tParameters[0]);
+    int tMode = stoi(inMode);
+    cout<<"Mode: (0 = manual, 1 field point file, 2 field point set file): "<<tMode<<endl;
+
+    // file name
+    //istringstream Converter(tParameters[1]);
+    //const string tInputFileName = Converter.str();
+    const string tInputFileName = tParameters[1];
+    cout<<"tInputFileName: "<<tInputFileName<<endl;
+
+    if( tMode==1 ) { // mode = 1 : input file: 1-dim field points (= 1 field point set)
+        myDimension = 1;
+        cout << "read one field point set from file - 1 Dimension (field lines) - only 1 dim!" << endl;
+        FieldPointGenerator generatorFromFile( "configfile1", tInputFileName );
+        pointSets.push_back( generatorFromFile );
+    } else if( tMode==2 ) { // mode = 2 : read field point sets from file
+        cout << "read field point set(s) from file - 1 Dimension (field lines) or 2 Dimensions (field maps)" << endl;
+        FieldPointSetReader readFileSet( tInputFileName, pointSets);
+    }
     // ------------------------------------------------
     // define point sets for all fields - tFieldObjects
     // ------------------------------------------------
 
-    // saving different point sets to vector
-    std::vector<FieldPointGenerator> pointSets;
+    if( tMode==0 ) // mode = 0 : define field points manually
+    {
+        cout << "define fieldpoint sets manually within source file - 1 Dimension (field lines) or 2 Dimensions (field maps)" << endl;
+        mainmsg(eNormal) << "START: Computation of manual defined point sets (containing field point vectors) for all definied fields." << eom;
 
-    mainmsg(eNormal) << "START: Computation of manual defined point sets (containing field point vectors) for all definied fields." << eom;
+        // field points on-axis
+        const unsigned int scaleOnAxis( myScale/100 );
+        const unsigned int dimensionOnAxis( myDimension );
+        const KThreeVector startOnAxis(0., 0., -0.75);
+        const KThreeVector endOnAxis(0., 0., 0.75);
+        FieldPointGenerator fieldOnAxis(
+            "Fields-1d1e7-OnAxis",
+            dimensionOnAxis,
+            scaleOnAxis,
+            startOnAxis,
+            endOnAxis
+        );
+        pointSets.push_back( fieldOnAxis );
 
-    // field points on-axis
-    const unsigned int scaleOnAxis( myScale );
-    const unsigned int dimensionOnAxis( myDimension );
-    const KThreeVector startOnAxis(0., 0., -0.75);
-    const KThreeVector endOnAxis(0., 0., 0.75);
-    FieldPointGenerator fieldOnAxis(
-        "Fields-1d1e7-OnAxis",
-        dimensionOnAxis,
-        scaleOnAxis,
-        startOnAxis,
-        endOnAxis
-    );
-    pointSets.push_back( fieldOnAxis );
+        // Comparison 1: r=5cm, near z=0, myScale = 1e7 points:
+        const unsigned int scaleComp1OffAxis( myScale/100 );
+        const unsigned int dimensionComp1OffAxis( myDimension );
+        const KThreeVector startComp1OffAxis(0., 0.05, -0.025);
+        const KThreeVector endComp1OffAxis(0., 0.05, 0.025);
+        FieldPointGenerator fieldComp1OffAxis(
+            "Fields-5cm-OffAxis",
+            dimensionComp1OffAxis,
+            scaleComp1OffAxis,
+            startComp1OffAxis,
+            endComp1OffAxis
+        );
+        pointSets.push_back( fieldComp1OffAxis );
 
-    // Comparison 1: r=5cm, near z=0, myScale = 1e7 points:
-    const unsigned int scaleComp1OffAxis( myScale );
-    const unsigned int dimensionComp1OffAxis( myDimension );
-    const KThreeVector startComp1OffAxis(0., 0.05, -0.025);
-    const KThreeVector endComp1OffAxis(0., 0.05, 0.025);
-    FieldPointGenerator fieldComp1OffAxis(
-        "Fields-5cm-OffAxis",
-        dimensionComp1OffAxis,
-        scaleComp1OffAxis,
-        startComp1OffAxis,
-        endComp1OffAxis
-    );
-    //pointSets.push_back( fieldComp1OffAxis );
+        // Comparison 1: r=9.5cm, near coils, myScale = 1e7 points:
+        const unsigned int scaleComp1Remote( myScale );
+        const unsigned int dimensionComp1Remote( myDimension );
+        const KThreeVector startComp1Remote(0., 0.095, -0.025);
+        const KThreeVector endComp1Remote(0., 0.095, 0.025);
+        FieldPointGenerator fieldComp1Remote(
+            "Fields-10cm-Remote",
+            dimensionComp1Remote,
+            scaleComp1Remote,
+            startComp1Remote,
+            endComp1Remote
+        );
+        //pointSets.push_back( fieldComp1Remote );
 
-    // Comparison 1: r=9.5cm, near coils, myScale = 1e7 points:
-    const unsigned int scaleComp1Remote( myScale );
-    const unsigned int dimensionComp1Remote( myDimension );
-    const KThreeVector startComp1Remote(0., 0.095, -0.025);
-    const KThreeVector endComp1Remote(0., 0.095, 0.025);
-    FieldPointGenerator fieldComp1Remote(
-        "Fields-10cm-Remote",
-        dimensionComp1Remote,
-        scaleComp1Remote,
-        startComp1Remote,
-        endComp1Remote
-    );
-    //pointSets.push_back( fieldComp1Remote );
+        // Comparison 2: r=5cm, near z=0, myScale = 1e7 points:
+        const unsigned int scaleComp2OffAxis( myScale );
+        const unsigned int dimensionComp2OffAxis( myDimension );
+        const KThreeVector startComp2OffAxis(0., 0.05, -0.75);
+        const KThreeVector endComp2OffAxis(0., 0.05, 0.75) ;
+        FieldPointGenerator fieldComp2OffAxis(
+            "Fields-5cm-OffAxis",
+            dimensionComp2OffAxis,
+            scaleComp2OffAxis,
+            startComp2OffAxis,
+            endComp2OffAxis
+        );
+        //pointSets.push_back( fieldComp2OffAxis );
 
-    // Comparison 2: r=5cm, near z=0, myScale = 1e7 points:
-    const unsigned int scaleComp2OffAxis( myScale );
-    const unsigned int dimensionComp2OffAxis( myDimension );
-    const KThreeVector startComp2OffAxis(0., 0.05, -0.75);
-    const KThreeVector endComp2OffAxis(0., 0.05, 0.75) ;
-    FieldPointGenerator fieldComp2OffAxis(
-        "Fields-5cm-OffAxis",
-        dimensionComp2OffAxis,
-        scaleComp2OffAxis,
-        startComp2OffAxis,
-        endComp2OffAxis
-    );
-    //pointSets.push_back( fieldComp2OffAxis );
+        // Comparison 2: r=9.5cm, near coils, myScale = 1e7 points:
+        const unsigned int scaleComp2Remote( myScale );
+        const unsigned int dimensionComp2Remote( myDimension );
+        const KThreeVector startComp2Remote(0., 0.85, -0.75);
+        const KThreeVector endComp2Remote(0., 0.85, 0.75);
+        FieldPointGenerator fieldComp2Remote(
+            "Fields-10cm-Remote",
+            dimensionComp2Remote,
+            scaleComp2Remote,
+            startComp2Remote,
+            endComp2Remote
+        );
+        //pointSets.push_back( fieldComp2Remote );
 
-    // Comparison 2: r=9.5cm, near coils, myScale = 1e7 points:
-    const unsigned int scaleComp2Remote( myScale );
-    const unsigned int dimensionComp2Remote( myDimension );
-    const KThreeVector startComp2Remote(0., 0.85, -0.75);
-    const KThreeVector endComp2Remote(0., 0.85, 0.75);
-    FieldPointGenerator fieldComp2Remote(
-        "Fields-10cm-Remote",
-        dimensionComp2Remote,
-        scaleComp2Remote,
-        startComp2Remote,
-        endComp2Remote
-    );
-    //pointSets.push_back( fieldComp2Remote );
+        mainmsg(eNormal) << eom << "DONE: Computation of all calculation point vectors for " << pointSets.size()*myScale << " field points" << eom;
 
-    mainmsg(eNormal) << eom << "DONE: Computation of all calculation point vectors for " << pointSets.size()*myScale << " field points" << eom;
-
-
-
-    // file name
-    istringstream Converter(tParameters[1]);
-    const string tInputFileName = Converter.str();
-
-    const string inMode(tParameters[0]);
-    int tMode = stoi(inMode);
-
-    if( tMode==0 ) {
-        myDimension = 1;
-        cout << "define fieldpoint sets manually within source file - 1 Dimension (field lines)" << endl;
-        //FieldPointGenerator gen1();
-    } else if( tMode==1 ) {
-        myDimension = 2;
-        cout << "define fieldpoint sets manually within source file - 2 Dimensions (field maps)" << endl;
-        //FieldPointGenerator gen2();
-    } else if( tMode==2 ) {
-        myDimension = 1;
-        cout << "read one field point set from file - 1 Dimension (field lines) - only 1 dim!" << endl;
-        FieldPointGenerator generatorFromFile( "configfile1", tInputFileName );
-    } else if( tMode==3 ) {
-        // dimension is given in the input file
-        FieldPointSetReader read1( tInputFileName, pointSets);
     }
+
+    std::cout << "point sets size " << pointSets.size() << std::endl;
 
     // option to write output file: 0, 1 valid, true, false invalid
     // By default, std::cin only accepts numeric input for Boolean variables: 0 is false, and 1 is true.
@@ -166,8 +165,10 @@ int main(int argc, char** argv)
     // std::cin to enter failure mode. Any non-numeric value will be interpreted as false and will cause std::cin to enter failure mode.    
     // To convert an integer to a boolean in C++, any non-zero integer will be converted to true,
     // while zero will be converted to false. This is done implicitly when assigning an integer to a boolean variable.
-    const string inWriteOutputFile(tParameters[2]);
-    const bool writeToFiles = stoi(inWriteOutputFile);
+    istringstream Converter(tParameters[2]);
+    bool writeToFiles;
+    Converter >> writeToFiles;
+    cout<<"writeToFiles: "<<writeToFiles<<endl;
 
     // initialitzing variables for measurement of computation times
     uint64 tStartTime( 0 );
@@ -176,6 +177,7 @@ int main(int argc, char** argv)
 
 #ifdef MAGNETIC
 #if MAGNETIC == 1
+
     // -----------------------
     // init of magnetic fields
     // -----------------------
@@ -185,18 +187,21 @@ int main(int argc, char** argv)
 
     for (size_t tIndex = 3; tIndex < tParameters.size(); tIndex++) {
         KSMagneticField* tMagneticFieldObject = getMagneticField(tParameters[tIndex]);
+        std::cout << tMagneticFieldObject->GetName() << std::endl;
         tMagneticFieldObject->Initialize();
         mainmsg(eNormal) << "Initialization of " << tMagneticFieldObject->GetName() << " finished." << eom << eom;
         tMagneticFields.push_back(tMagneticFieldObject);
     }
 
     KThreeVector tMagneticField;
-    // TODO: KThreeVector tElectricField
     // TODO: KThreeMatrix tMagneticFieldGradient;
+
 #endif
 #endif
 
+// TODO: KThreeVector tElectricField
 
+std::cout << "here" << std::endl;
 
 
     // ----------------------------------
@@ -303,7 +308,7 @@ int main(int argc, char** argv)
         } // point set
     } // for - loop over tFieldObjects
 
-    for (size_t tIndex = 1; tIndex < tParameters.size(); tIndex++) {
+    for (size_t tIndex = 3; tIndex < tParameters.size(); tIndex++) {
         KSMagneticField* tMagneticFieldObject = getMagneticField(tParameters[tIndex]);
         tMagneticFieldObject->Deinitialize();
     }

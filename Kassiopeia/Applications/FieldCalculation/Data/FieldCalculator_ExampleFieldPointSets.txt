@@ -1,0 +1,4 @@
+3
+AlongZAxis 1 1e5 0. 0. -1. 0. 0. 1.
+AlongXAxis 1 1e3 -0.95 0. 0. 0.95 0. 0.
+AlongYAxis 1 1e3 0. -0.95 0. 0. 0.95 0.

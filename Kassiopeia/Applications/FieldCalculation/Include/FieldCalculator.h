@@ -60,18 +60,12 @@ class FieldPointGenerator{
             // length of vector
             const double theLength = (endPoint - startPoint).Magnitude()/noPoints;
 
-            tResult temp;
-            const KThreeVector empty(0., 0., 0.);
             KThreeVector calcPoint(0., 0., 0.);
 
             for( unsigned int i=0; i<=noPoints; i++ )
             {
                 calcPoint = startPoint + ( i*theLength*directionVector );
-                
-                temp.myPosition = calcPoint;
-                temp.myField = empty;
-
-                theResultVector.push_back( temp );
+                SetPositionToResultVector( calcPoint );
             };
             return 0;
         };
@@ -108,27 +102,18 @@ class FieldPointGenerator{
 
             theResultVector.clear();
 
-            tResult temp;
-            const KThreeVector empty(0., 0., 0.);
-            KThreeVector calcPoint(0., 0., 0.);
+            double calcPoint[3];
 
             // get the start point
 
             input >> calcPoint[0] >> calcPoint[1] >> calcPoint[2];
             SetStartPoint( calcPoint );
 
-            temp.myPosition = calcPoint;
-            temp.myField = empty;
-
-            theResultVector.push_back( temp );
+            SetPositionToResultVector( calcPoint );
 
             for ( unsigned int i = 1; i < noPoints; i++ ) {
                 input >> calcPoint[0] >> calcPoint[1] >> calcPoint[2];
-                
-                temp.myPosition = calcPoint;
-                temp.myField = empty;
-
-                theResultVector.push_back( temp );
+                SetPositionToResultVector( calcPoint );
             }
 
             endPoint=calcPoint;
@@ -233,12 +218,13 @@ class FieldPointSetReader{
 
         std::string label = ("");
         unsigned int tDimension = 0;
-        unsigned int tScale = 0;
+        double tScale = 0;
         KThreeVector start, end;
     
+        // no exponents in input file
         for ( unsigned int i = 0; i < fNLines; i++ ) {
             input >> label >> tDimension >> tScale >> start[0] >> start[1] >> start[2] >> end[0] >> end[1] >> end[2];
-    
+    cout << label << tDimension << tScale << start[0] << start[1] << start[2] << end[0] << end[1] << end[2];
             FieldPointGenerator myGen(label, tDimension, tScale, start, end);
     
             thePointSet.push_back( myGen );
