@@ -3,6 +3,10 @@
 
 #include "KThreeVector.hh"
 
+/* Remove if already defined */
+typedef long long int64;
+using uint64 = unsigned long long;
+
 // timing function
 #include <ctime>
 #include <sys/time.h>
@@ -26,7 +30,7 @@ struct tResult{
 
 class FieldPointGenerator{
     public:
-        FieldPointGenerator( std::string label, unsigned int inDim, const unsigned int no, const KThreeVector start, const KThreeVector end)
+        FieldPointGenerator( std::string label, unsigned int inDim, const uint64 no, const KThreeVector start, const KThreeVector end)
         {
             completeName=label;
 
@@ -127,8 +131,8 @@ class FieldPointGenerator{
         void SetDim( unsigned int input ){calcDimensions=input;return;};
         int GetDim(){return calcDimensions;};
 
-        void SetNPoints( unsigned int input ){noPoints=input;return;};
-        unsigned int GetNPoints(){return noPoints;};
+        void SetNPoints( uint64 input ){noPoints=input;return;};
+        uint64 GetNPoints(){return noPoints;};
 
         void SetStartPoint( KThreeVector input ){startPoint=input;return;};
         const KThreeVector GetStartPoint(){return startPoint;};
@@ -138,9 +142,8 @@ class FieldPointGenerator{
 
         void SetPositionToResultVector( KThreeVector input ) {
             tResult temp;
-            const KThreeVector empty(0., 0., 0.);
-            temp.myPosition = input;
-            temp.myField = empty;
+            temp.myPosition.SetComponents( input );
+            temp.myField.SetComponents( 0., 0., 0. );
             theResultVector.push_back( temp );
         };
         
@@ -149,7 +152,7 @@ class FieldPointGenerator{
     private:
         string completeName;
         unsigned int calcDimensions;
-        unsigned int noPoints;
+        uint64 noPoints;
         KThreeVector startPoint;
         KThreeVector endPoint;
     };
@@ -159,12 +162,6 @@ class FieldPointGenerator{
 //////////////////////
 // TIME MEASUREMENT //
 //////////////////////
-
-
-
-/* Remove if already defined */
-typedef long long int64;
-using uint64 = unsigned long long;
 
 /* Returns the amount of milliseconds elapsed since the UNIX epoch. Works on both
  * windows and linux. */
@@ -218,13 +215,13 @@ class FieldPointSetReader{
 
         std::string label = ("");
         unsigned int tDimension = 0;
-        double tScale = 0;
+        uint64 tScale = 0;
         KThreeVector start, end;
     
         // no exponents in input file
         for ( unsigned int i = 0; i < fNLines; i++ ) {
             input >> label >> tDimension >> tScale >> start[0] >> start[1] >> start[2] >> end[0] >> end[1] >> end[2];
-    cout << label << tDimension << tScale << start[0] << start[1] << start[2] << end[0] << end[1] << end[2];
+            mainmsg( eDebug ) << label << tDimension << tScale << start[0] << start[1] << start[2] << end[0] << end[1] << end[2] << eom;
             FieldPointGenerator myGen(label, tDimension, tScale, start, end);
     
             thePointSet.push_back( myGen );

@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     tParameters.pop_front();  // strip off config file name
 
     // scale: field points between start- and end point
-    const unsigned int myScale( 1e7 );
+    const uint64 myScale( 1e7 );
 
     // precision for output of values
     const unsigned int myPrecision( 16 );
@@ -57,21 +57,19 @@ int main(int argc, char** argv)
 
     const string inMode(tParameters[0]);
     int tMode = stoi(inMode);
-    cout<<"Mode: (0 = manual, 1 field point file, 2 field point set file): "<<tMode<<endl;
+    mainmsg( eNormal ) << "Chosen mode (0 = manual, 1 field point file, 2 field point set file): "<< tMode << eom;
 
     // file name
-    //istringstream Converter(tParameters[1]);
-    //const string tInputFileName = Converter.str();
     const string tInputFileName = tParameters[1];
-    cout<<"tInputFileName: "<<tInputFileName<<endl;
+    mainmsg( eDebug ) << "tInputFileName: " << tInputFileName << eom;
 
     if( tMode==1 ) { // mode = 1 : input file: 1-dim field points (= 1 field point set)
         myDimension = 1;
-        cout << "read one field point set from file - 1 Dimension (field lines) - only 1 dim!" << endl;
+        mainmsg( eDebug ) << "read one field point set from file - 1 Dimension (field lines) - only 1 dim!" << eom;
         FieldPointGenerator generatorFromFile( "configfile1", tInputFileName );
         pointSets.push_back( generatorFromFile );
     } else if( tMode==2 ) { // mode = 2 : read field point sets from file
-        cout << "read field point set(s) from file - 1 Dimension (field lines) or 2 Dimensions (field maps)" << endl;
+        mainmsg( eDebug ) << "read field point set(s) from file - 1 Dimension (field lines) or 2 Dimensions (field maps)" << eom;
         FieldPointSetReader readFileSet( tInputFileName, pointSets);
     }
     // ------------------------------------------------
@@ -80,11 +78,11 @@ int main(int argc, char** argv)
 
     if( tMode==0 ) // mode = 0 : define field points manually
     {
-        cout << "define fieldpoint sets manually within source file - 1 Dimension (field lines) or 2 Dimensions (field maps)" << endl;
-        mainmsg(eNormal) << "START: Computation of manual defined point sets (containing field point vectors) for all definied fields." << eom;
+        mainmsg( eDebug ) << "define fieldpoint sets manually within source file - 1 Dimension (field lines) or 2 Dimensions (field maps)" << eom;
+        mainmsg(eNormal) << eom << "START: Computation of manual defined point sets (containing field point vectors) for all definied fields." << eom;
 
         // field points on-axis
-        const unsigned int scaleOnAxis( myScale/100 );
+        const uint64 scaleOnAxis( 1e6 );
         const unsigned int dimensionOnAxis( myDimension );
         const KThreeVector startOnAxis(0., 0., -0.75);
         const KThreeVector endOnAxis(0., 0., 0.75);
@@ -98,7 +96,7 @@ int main(int argc, char** argv)
         pointSets.push_back( fieldOnAxis );
 
         // Comparison 1: r=5cm, near z=0, myScale = 1e7 points:
-        const unsigned int scaleComp1OffAxis( myScale/100 );
+        const uint64 scaleComp1OffAxis( myScale/100 );
         const unsigned int dimensionComp1OffAxis( myDimension );
         const KThreeVector startComp1OffAxis(0., 0.05, -0.025);
         const KThreeVector endComp1OffAxis(0., 0.05, 0.025);
@@ -109,10 +107,10 @@ int main(int argc, char** argv)
             startComp1OffAxis,
             endComp1OffAxis
         );
-        pointSets.push_back( fieldComp1OffAxis );
+        //pointSets.push_back( fieldComp1OffAxis );
 
         // Comparison 1: r=9.5cm, near coils, myScale = 1e7 points:
-        const unsigned int scaleComp1Remote( myScale );
+        const uint64 scaleComp1Remote( myScale );
         const unsigned int dimensionComp1Remote( myDimension );
         const KThreeVector startComp1Remote(0., 0.095, -0.025);
         const KThreeVector endComp1Remote(0., 0.095, 0.025);
@@ -126,7 +124,7 @@ int main(int argc, char** argv)
         //pointSets.push_back( fieldComp1Remote );
 
         // Comparison 2: r=5cm, near z=0, myScale = 1e7 points:
-        const unsigned int scaleComp2OffAxis( myScale );
+        const uint64 scaleComp2OffAxis( myScale );
         const unsigned int dimensionComp2OffAxis( myDimension );
         const KThreeVector startComp2OffAxis(0., 0.05, -0.75);
         const KThreeVector endComp2OffAxis(0., 0.05, 0.75) ;
@@ -140,7 +138,7 @@ int main(int argc, char** argv)
         //pointSets.push_back( fieldComp2OffAxis );
 
         // Comparison 2: r=9.5cm, near coils, myScale = 1e7 points:
-        const unsigned int scaleComp2Remote( myScale );
+        const uint64 scaleComp2Remote( myScale );
         const unsigned int dimensionComp2Remote( myDimension );
         const KThreeVector startComp2Remote(0., 0.85, -0.75);
         const KThreeVector endComp2Remote(0., 0.85, 0.75);
@@ -153,11 +151,11 @@ int main(int argc, char** argv)
         );
         //pointSets.push_back( fieldComp2Remote );
 
-        mainmsg(eNormal) << eom << "DONE: Computation of all calculation point vectors for " << pointSets.size()*myScale << " field points" << eom;
+        mainmsg(eNormal) << "DONE: Computation of all calculation point vectors for " << pointSets.size()*myScale << " field points" << eom << eom;
 
     }
 
-    std::cout << "point sets size " << pointSets.size() << std::endl;
+    mainmsg( eDebug ) << "point sets size " << pointSets.size() << eom;
 
     // option to write output file: 0, 1 valid, true, false invalid
     // By default, std::cin only accepts numeric input for Boolean variables: 0 is false, and 1 is true.
@@ -168,7 +166,7 @@ int main(int argc, char** argv)
     istringstream Converter(tParameters[2]);
     bool writeToFiles;
     Converter >> writeToFiles;
-    cout<<"writeToFiles: "<<writeToFiles<<endl;
+    mainmsg( eDebug ) << "writeToFiles: " << writeToFiles << eom;
 
     // initialitzing variables for measurement of computation times
     uint64 tStartTime( 0 );
@@ -187,7 +185,6 @@ int main(int argc, char** argv)
 
     for (size_t tIndex = 3; tIndex < tParameters.size(); tIndex++) {
         KSMagneticField* tMagneticFieldObject = getMagneticField(tParameters[tIndex]);
-        std::cout << tMagneticFieldObject->GetName() << std::endl;
         tMagneticFieldObject->Initialize();
         mainmsg(eNormal) << "Initialization of " << tMagneticFieldObject->GetName() << " finished." << eom << eom;
         tMagneticFields.push_back(tMagneticFieldObject);
@@ -200,9 +197,6 @@ int main(int argc, char** argv)
 #endif
 
 // TODO: KThreeVector tElectricField
-
-std::cout << "here" << std::endl;
-
 
     // ----------------------------------
     // for-loop over tFieldObjects
