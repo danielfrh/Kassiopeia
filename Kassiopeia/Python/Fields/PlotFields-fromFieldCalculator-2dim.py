@@ -28,3 +28,15 @@ plt.tight_layout()
 # Optional: Als Bild speichern
 plt.savefig("magnetfeld_heatmap.png", dpi=300)
 plt.show()
+
+Erklärung der Schritte:
+Einlesen mit Pandas (pd.read_csv):
+skiprows=1 ignoriert die erste Zeile der Datei (die 4), da diese lediglich die Anzahl der Messpunkte angibt.
+delim_whitespace=True sorgt dafür, dass die durch Leerzeichen getrennten Spalten korrekt erkannt werden.
+Spaltenzuweisung: Die Spalten werden mit aussagekräftigen Namen versehen (x, y, z, magnetfeld).
+Pivotieren (df.pivot): Seaborn-Heatmaps benötigen eine Matrix-Struktur, bei der die Zeilen und Spalten den Koordinaten
+und die Zelleninhalte den Messwerten entsprechen.
+Visualisierung (sns.heatmap):
+annot=True zeigt die konkreten Magnetfeldwerte direkt in den Feldern an.
+cmap='viridis' sorgt für eine moderne, leicht ablesbare Farbpalette.
+Falls du noch weitere Koordinaten oder eine höhere Auflösung hast, skaliert dieses Skript automatisch mit!

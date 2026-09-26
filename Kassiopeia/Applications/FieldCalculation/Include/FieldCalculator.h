@@ -30,15 +30,14 @@ struct tResult{
 
 class FieldPointGenerator{
     public:
-        FieldPointGenerator( std::string label, unsigned int inDim, const uint64 no, const KThreeVector start, const KThreeVector end)
+        FieldPointGenerator( const std::string& inLabel, const short& inDim, const uint64& inNo, const KThreeVector& inStart, const KThreeVector& inEnd )
         {
-            completeName=label;
+            SetName( inLabel );
+            SetNPoints( inNo );
+            SetStartPoint( inStart );
+            SetEndPoint( inEnd );
 
-            SetNPoints(no);
-            SetStartPoint(start);
-            SetEndPoint(end);
-
-            if(noPoints<2) {
+            if( noPoints<2 ) {
                 mainmsg( eWarning ) << "Please note that at least 2 points have to be computed, set noPoints=2." << eom;
                 noPoints = 2;
             };
@@ -47,14 +46,42 @@ class FieldPointGenerator{
             int retVal = 0;
 
             if( inDim==1 ) {
-                SetDim(inDim);
+                SetDim( inDim );
                 retVal = GenerateFieldPoints1dim();
             } else {
-                SetDim(inDim);
+                SetDim( inDim );
                 retVal = GenerateFieldPoints2dim();
             };
-            if(retVal>0) mainmsg(eError) << "Field point computation failed." << eom; 
+            if( retVal>0 ) mainmsg(eError) << "Field point computation failed." << eom; 
         };
+
+        FieldPointGenerator( const std::string& inLabel, const short& inDim, const uint64& inNo, const KThreeVector& inStart, const KThreeVector& inEnd, const KThreeVector& inNormal )
+        {
+            SetName( inLabel );
+            SetPlaneNormal (inNormal );
+            SetNPoints( inNo );
+            SetStartPoint( inStart );
+            SetEndPoint( inEnd );
+
+            if( noPoints<2 ) {
+                mainmsg( eWarning ) << "Please note that at least 2 points have to be computed, set noPoints=2." << eom;
+                noPoints = 2;
+            };
+            theResultVector.clear();
+
+            int retVal = 0;
+
+            if( inDim==2 ) {
+                SetDim(inDim);
+                retVal = GenerateFieldPoints2dim();
+            } else {
+                mainmsg(eError) << "Please note that a normal vector for a one-dimensional line has been defined, but this function generates points in a 2-dim. surface. Please reduce dimension." << eom;
+            };
+            if( retVal>0 ) {
+                mainmsg(eError) << "Field point computation failed."<< eom;
+            } 
+        };
+
 
         int GenerateFieldPoints1dim( void )
         {
@@ -64,23 +91,61 @@ class FieldPointGenerator{
             // length of vector
             const double theLength = (endPoint - startPoint).Magnitude()/noPoints;
 
-            KThreeVector calcPoint(0., 0., 0.);
-
             for( unsigned int i=0; i<=noPoints; i++ )
             {
-                calcPoint = startPoint + ( i*theLength*directionVector );
+                const KThreeVector calcPoint = startPoint + ( i*theLength*directionVector );
                 SetPositionToResultVector( calcPoint );
             };
             return 0;
         };
 
         int GenerateFieldPoints2dim( void )
-        {
-            // TODO
-            mainmsg( eError) << "2-dimensional field maps not implemented yet." << eom;
-            return 1;
-        };
+        {    
+            // Source: Gemini, Flash-Lite
+            // 1. Normalenvektor normieren
+            const double lengthNormal = GetPlaneNormal().Magnitude();
+            if( lengthNormal > 1 ){ SetPlaneNormal(GetPlaneNormal()/lengthNormal); };
 
+            // 2. Diagonalenvektor und Länge bestimmen
+            const KThreeVector diagVec = GetEndPoint() - GetStartPoint();
+            const double diagLength = diagVec.Magnitude();
+    
+            if (diagLength == 0 || GetNPoints() <= 0) mainmsg(eError) << "The length of the diag(endPoint-startPoint) is zero or the scale is smaller or equal to 0." << eom;
+
+            // 3. Lokales Koordinatensystem in der Ebene aufspannen
+            KThreeVector helper = (std::abs(GetPlaneNormal().GetX()) < 0.9) ? KThreeVector(1, 0, 0) : KThreeVector(0, 1, 0);
+            KThreeVector u_axis_NonNorm=GetPlaneNormal().Cross( helper );
+            KThreeVector u_axis = u_axis_NonNorm/u_axis_NonNorm.Magnitude();
+            KThreeVector v_axis_NonNorm = GetPlaneNormal().Cross( u_axis );
+            KThreeVector v_axis = v_axis_NonNorm/v_axis_NonNorm.Magnitude();
+
+            // 4. Diagonale auf das lokale System projizieren (Kantenlaáengen ermitteln)
+            const double Lu = diagVec.Dot(u_axis);
+            const double Lv = diagVec.Dot(v_axis);
+    
+            const double width = std::abs(Lu);
+            const double height = std::abs(Lv);
+    
+            // 5. Lineare Skalierung der Schrittweiten
+            double step_u = GetNPoints() * ( width / diagLength);
+            double step_v = GetNPoints() * ( height / diagLength);
+    
+            if (step_u <= 0) step_u = GetNPoints();
+            if (step_v <= 0) step_v = GetNPoints();
+
+             // 6. Äquidistante Punkte generieren
+            for (double u = 0; u <= width; u += step_u) {
+                for (double v = 0; v <= height; v += step_v) {
+                    double sign_u = (Lu >= 0) ? 1.0 : -1.0;
+                    double sign_v = (Lv >= 0) ? 1.0 : -1.0;
+                    
+                    const KThreeVector calcPoint = GetStartPoint() + u_axis * (u * sign_u) + v_axis * (v * sign_v);
+                    SetPositionToResultVector( calcPoint );
+                }
+            }
+
+            return 0;
+        }
 
         // the input file defines the number of points, no scale, 1-dim case
         FieldPointGenerator( std::string label, std::string fInputFileName )
@@ -97,7 +162,7 @@ class FieldPointGenerator{
             input >> noPoints;
 
             if(noPoints<2) {
-                mainmsg( eWarning ) << "Please note that at least 2 points have to be computed, set noPoints=2." << eom;
+                mainmsg( eWarning ) << "Please note that at least two points have to be computed, set noPoints=2." << eom;
                 noPoints = 2;
             }
             
@@ -125,22 +190,25 @@ class FieldPointGenerator{
             input.close();
         };
 
-        void SetName( std::string input ){completeName=input;return;};
-        std::string GetName(){return completeName;};
+        void SetName( const std::string& input ){completeName=input;return;};
+        std::string GetName() const {return completeName;};
 
-        void SetDim( unsigned int input ){calcDimensions=input;return;};
-        int GetDim(){return calcDimensions;};
+        void SetDim( const short& input ){calcDimensions=input;return;};
+        short GetDim() const {return calcDimensions;};
 
-        void SetNPoints( uint64 input ){noPoints=input;return;};
-        uint64 GetNPoints(){return noPoints;};
+        void SetNPoints( const uint64& input ){noPoints=input;return;};
+        uint64 GetNPoints() const {return noPoints;};
 
-        void SetStartPoint( KThreeVector input ){startPoint=input;return;};
-        const KThreeVector GetStartPoint(){return startPoint;};
+        void SetStartPoint( const KThreeVector& input ){startPoint=input;return;};
+        KThreeVector GetStartPoint() const {return startPoint;};
 
-        void SetEndPoint( KThreeVector input ){endPoint=input;return;};
-        const KThreeVector GetEndPoint(){return endPoint;};
+        void SetEndPoint( const KThreeVector& input ){endPoint=input;return;};
+        KThreeVector GetEndPoint() const {return endPoint;};
 
-        void SetPositionToResultVector( KThreeVector input ) {
+        void SetPlaneNormal( const KThreeVector& input ) {planeNormal = input; return;};
+        KThreeVector GetPlaneNormal() const {return planeNormal;};
+
+        void SetPositionToResultVector( const KThreeVector& input ) {
             tResult temp;
             temp.myPosition.SetComponents( input );
             temp.myField.SetComponents( 0., 0., 0. );
@@ -151,10 +219,11 @@ class FieldPointGenerator{
 
     private:
         string completeName;
-        unsigned int calcDimensions;
+        short calcDimensions;
         uint64 noPoints;
         KThreeVector startPoint;
         KThreeVector endPoint;
+        KThreeVector planeNormal;
     };
 
 
@@ -214,15 +283,19 @@ class FieldPointSetReader{
         }
 
         std::string label = ("");
-        unsigned int tDimension = 0;
+        short tDimension = 0;
         uint64 tScale = 0;
-        KThreeVector start, end;
+        KThreeVector start, end, normalV;
     
-        // no exponents in input file
+        // no exponents in input file?
         for ( unsigned int i = 0; i < fNLines; i++ ) {
             input >> label >> tDimension >> tScale >> start[0] >> start[1] >> start[2] >> end[0] >> end[1] >> end[2];
-            mainmsg( eDebug ) << label << tDimension << tScale << start[0] << start[1] << start[2] << end[0] << end[1] << end[2] << eom;
-            FieldPointGenerator myGen(label, tDimension, tScale, start, end);
+            mainmsg( eDebug ) << label << tDimension << tScale << start[0] << start[1] << start[2] << end[0] << end[1] << end[2];
+            if( tDimension==2 ) {
+                input >> normalV[0] >> normalV[1] >> normalV[2];
+                mainmsg( eDebug ) << normalV[0] << normalV[1] << normalV[2] << eom;
+            }
+            FieldPointGenerator myGen(label, tDimension, tScale, start, end, normalV);
     
             thePointSet.push_back( myGen );
         }

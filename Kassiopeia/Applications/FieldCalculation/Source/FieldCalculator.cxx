@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     cout.precision( myPrecision );
 
     // dimensions: fieldlines (dim 1), field maps (dim 2)
-    unsigned int myDimension( 1 );
+    short myDimension( 1 );
 
     // saving different point sets to vector
     std::vector<FieldPointGenerator> pointSets;
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
 
         // field points on-axis
         const uint64 scaleOnAxis( 1e6 );
-        const unsigned int dimensionOnAxis( myDimension );
+        const short dimensionOnAxis( myDimension );
         const KThreeVector startOnAxis(0., 0., -0.75);
         const KThreeVector endOnAxis(0., 0., 0.75);
         FieldPointGenerator fieldOnAxis(
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 
         // Comparison 1: r=5cm, near z=0, myScale = 1e7 points:
         const uint64 scaleComp1OffAxis( myScale/100 );
-        const unsigned int dimensionComp1OffAxis( myDimension );
+        const short dimensionComp1OffAxis( myDimension );
         const KThreeVector startComp1OffAxis(0., 0.05, -0.025);
         const KThreeVector endComp1OffAxis(0., 0.05, 0.025);
         FieldPointGenerator fieldComp1OffAxis(
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 
         // Comparison 1: r=9.5cm, near coils, myScale = 1e7 points:
         const uint64 scaleComp1Remote( myScale );
-        const unsigned int dimensionComp1Remote( myDimension );
+        const short dimensionComp1Remote( myDimension );
         const KThreeVector startComp1Remote(0., 0.095, -0.025);
         const KThreeVector endComp1Remote(0., 0.095, 0.025);
         FieldPointGenerator fieldComp1Remote(
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 
         // Comparison 2: r=5cm, near z=0, myScale = 1e7 points:
         const uint64 scaleComp2OffAxis( myScale );
-        const unsigned int dimensionComp2OffAxis( myDimension );
+        const short dimensionComp2OffAxis( myDimension );
         const KThreeVector startComp2OffAxis(0., 0.05, -0.75);
         const KThreeVector endComp2OffAxis(0., 0.05, 0.75) ;
         FieldPointGenerator fieldComp2OffAxis(
@@ -139,7 +139,7 @@ int main(int argc, char** argv)
 
         // Comparison 2: r=9.5cm, near coils, myScale = 1e7 points:
         const uint64 scaleComp2Remote( myScale );
-        const unsigned int dimensionComp2Remote( myDimension );
+        const short dimensionComp2Remote( myDimension );
         const KThreeVector startComp2Remote(0., 0.85, -0.75);
         const KThreeVector endComp2Remote(0., 0.85, 0.75);
         FieldPointGenerator fieldComp2Remote(
@@ -150,6 +150,22 @@ int main(int argc, char** argv)
             endComp2Remote
         );
         //pointSets.push_back( fieldComp2Remote );
+
+        // Test computation for plane:
+        const uint64 scalePlane( myScale/1000 );
+        const short dimensionPlane( 2 );
+        const KThreeVector startPlane(0., 0., -0.75);
+        const KThreeVector endPlane(1., 1., -0.75);
+        const KThreeVector normalVec(0., 0., 1.);
+        FieldPointGenerator fieldPlane(
+            "FieldsPlane",
+            dimensionPlane,
+            scalePlane,
+            startPlane,
+            endPlane,
+            normalVec
+        );
+        //pointSets.push_back( fieldPlane );
 
         mainmsg(eNormal) << "DONE: Computation of all calculation point vectors for " << pointSets.size()*myScale << " field points" << eom << eom;
 
@@ -283,6 +299,10 @@ int main(int argc, char** argv)
                 mainmsg( eNormal) << "label: " << it1PointSets.GetName() << eom;
                 outputFile->Open(KFile::eWrite);
                 fstream& file1=*(outputFile->File());
+                if (!file1.is_open()) {
+                    mainmsg(eError) << "Fehler: Konnte Datei " << string(it1PointSets.GetName()+".csv") << " nicht oeffnen!" << eom;
+                    return 1;
+                }
                 file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
 
                 for (unsigned int m = 0; m < it1PointSets.theResultVector.size(); m++) {
