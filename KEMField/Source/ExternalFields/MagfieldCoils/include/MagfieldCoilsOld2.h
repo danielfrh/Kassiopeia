@@ -14,25 +14,9 @@
 
 using namespace std;
 
-//
-// TIME MEASUREMENT ACTIVE: TIMEMEAS=1
-// 
-#define TIMEMEAS 1
-
-//
-// COUNT TERMS OF CENTRAL AND REMOTE EXPANSION (ONLY FOR LAST COIL!) ACTIVE:  LEGPOLY=1
-//
-#define LEGPOLY 1
-
-//
-// PRINT INPUT COIL GEOMETRY FROM COILREAD()-FUNCTION
-//
-#define PRINTCOILGEO 0
-
 /* Remove if already defined */
 typedef long long int64;
 using uint64 = unsigned long long;
-
 
 ////////////////////////////////////
 
@@ -46,13 +30,6 @@ class MagfieldCoils
     bool Magfield(const double* P, double* B);
     void MagfieldElliptic(const double* P, double* B);
     void SetTrackingStart();
-
-    // Getter for number of Legendre polynomials for center and remote expansion
-    unsigned int GetNLegendreCentral( void ) {return nTermsCentral;};
-    unsigned int GetNLegendreRemote( void ) {return nTermsRemote;};
-//
-// TIME MEASUREMENT
-//
     uint64 GetTimeMs64( void );
     uint64 startTime;
     uint64 endTime;
@@ -157,9 +134,6 @@ class MagfieldCoils
         fBcenG;  // central source constant: BcenG[g][j][n] (group index g, source point index j, source const. index n)
     int *fjlast, *fjlastG;  // last central source point index for coil and group calculation
     double frclimit;
-
-    unsigned int nTermsRemote;
-    unsigned int nTermsCentral;
 };
 
 
