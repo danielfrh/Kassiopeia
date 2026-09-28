@@ -187,9 +187,12 @@ template<typename Stream> Stream& operator>>(Stream& s, KZonalHarmonicParameters
 {
     s.PreStreamInAction(p);
 
-    unsigned int i;
+    int i;
+    unsigned int ui;
     double d;
     bool b;
+
+
 
     s >> i;
     p.SetNBifurcations(i);
@@ -201,8 +204,8 @@ template<typename Stream> Stream& operator>>(Stream& s, KZonalHarmonicParameters
     p.SetConvergenceParameter(d);
     s >> d;
     p.SetCoaxialityTolerance(d);
-    s >> i;
-    p.SetNCentralCoefficients(i);
+    s >> ui;
+    p.SetNCentralCoefficients(ui);
     s >> b;
     p.SetCentralFractionalSpacing(b);
     s >> d;
@@ -213,10 +216,10 @@ template<typename Stream> Stream& operator>>(Stream& s, KZonalHarmonicParameters
     p.SetCentralZ1(d);
     s >> d;
     p.SetCentralZ2(d);
-    s >> i;
-    p.SetNRemoteCoefficients(i);
-    s >> i;
-    p.SetNRemoteSourcePoints(i);
+    s >> ui;
+    p.SetNRemoteCoefficients(ui);
+    s >> ui;
+    p.SetNRemoteSourcePoints(ui);
     s >> d;
     p.SetRemoteZ1(d);
     s >> d;
