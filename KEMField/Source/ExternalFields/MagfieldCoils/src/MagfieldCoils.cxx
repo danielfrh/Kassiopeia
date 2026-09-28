@@ -253,6 +253,20 @@ void MagfieldCoils::CoilRead()
     double cu, Cx, Cy, Cz, alpha, beta, tu, L, Rmin, Rmax;
     for (int i = 0; i < fNcoil; i++) {
         input >> cu >> Cx >> Cy >> Cz >> alpha >> beta >> tu >> L >> Rmin >> Rmax;
+#ifdef PRINTCOILGEO
+    #if PRINTCOILGEO == 1
+        std::cout << "fcoil[i][0] = cu = " << cu << std::endl;
+        std::cout << "fcoil[i][1] = Cx = " <<Cx<<std::endl;
+        std::cout << "fcoil[i][2] = Cy = " << Cy<<std::endl;
+        std::cout << "fcoil[i][3] = Cz = "<<Cz<<std::endl;
+        std::cout << "fcoil[i][4] = alpha = "<<alpha<<std::endl;
+        std::cout << "fcoil[i][5] = beta = "<<beta<<std::endl;
+        std::cout << "fcoil[i][6] = tu = "<<tu<<std::endl;
+        std::cout << "fcoil[i][7] = L = "<<L<<std::endl;
+        std::cout << "fcoil[i][8] = Rmin = "<<Rmin<<std::endl;
+        std::cout << "fcoil[i][9] = Rmax = "<<Rmax<<std::endl;
+    #endif
+#endif
         // Coil parameter determination:
         fcoil[i][0] = cu;
         fcoil[i][1] = Cx;
@@ -268,6 +282,15 @@ void MagfieldCoils::CoilRead()
         fcoil[i][11] = sin(beta / 180. * M_PI) * sin(alpha / 180. * M_PI);   // coil direction unit vector comp. ux
         fcoil[i][12] = -sin(beta / 180. * M_PI) * cos(alpha / 180. * M_PI);  // coil direction unit vector comp. uy
         fcoil[i][13] = cos(beta / 180. * M_PI);                              // coil direction unit vector comp. uz
+#ifdef PRINTCOILGEO
+    #if PRINTCOILGEO == 1
+       std::cout << "fcoil[i][10] = current density =  cu * tu / (L * (Rmax - Rmin)) = " << fcoil[i][10] << std::endl;
+       std::cout << "coil direction unit vector comp. ux = sin(beta / 180. * M_PI) * sin(alpha / 180. * M_PI) = " << fcoil[i][11] << std::endl;
+       std::cout << "coil direction unit vector comp. uy = -sin(beta / 180. * M_PI) * cos(alpha / 180. * M_PI) = " << fcoil[i][12] << std::endl;
+       std::cout << "coil direction unit vector comp. uz = cos(beta / 180. * M_PI) = " << fcoil[i][13] << std::endl;
+       std::cout << " --- " << std::endl;
+    #endif
+#endif
     }
     input.close();
     //

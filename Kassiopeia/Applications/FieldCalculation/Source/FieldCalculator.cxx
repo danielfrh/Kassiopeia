@@ -1,3 +1,6 @@
+// Version 2
+// Update: 28.09.2026
+
 #include "KMessage.h"
 #include "KRandom.h"
 #include "KSFieldFinder.h"
@@ -12,6 +15,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+
 // time measurement, field point generator and field point set reader
 #include "FieldCalculator.h"
 

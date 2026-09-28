@@ -1,6 +1,8 @@
 #ifndef Kassiopeia_FieldCalculator_h_
 #define Kassiopeia_FieldCalculator_h_
 
+// Update: 28.09.2026
+
 #include "KThreeVector.hh"
 
 /* Remove if already defined */
@@ -284,20 +286,26 @@ class FieldPointSetReader{
 
         std::string label = ("");
         short tDimension = 0;
-        uint64 tScale = 0;
+        double tScale = 0;
         KThreeVector start, end, normalV;
     
         // no exponents in input file?
         for ( unsigned int i = 0; i < fNLines; i++ ) {
             input >> label >> tDimension >> tScale >> start[0] >> start[1] >> start[2] >> end[0] >> end[1] >> end[2];
             mainmsg( eDebug ) << label << tDimension << tScale << start[0] << start[1] << start[2] << end[0] << end[1] << end[2];
-            if( tDimension==2 ) {
+            if( tDimension==1 )
+            {
+                FieldPointGenerator myGen(label, tDimension, tScale, start, end);
+                thePointSet.push_back( myGen );
+            }
+            else if( tDimension==2 )
+            {
                 input >> normalV[0] >> normalV[1] >> normalV[2];
                 mainmsg( eDebug ) << normalV[0] << normalV[1] << normalV[2] << eom;
+
+                FieldPointGenerator myGen(label, tDimension, tScale, start, end, normalV);
+                thePointSet.push_back( myGen );
             }
-            FieldPointGenerator myGen(label, tDimension, tScale, start, end, normalV);
-    
-            thePointSet.push_back( myGen );
         }
     
         input.close();

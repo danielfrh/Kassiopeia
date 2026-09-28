@@ -40,3 +40,6 @@ Visualisierung (sns.heatmap):
 annot=True zeigt die konkreten Magnetfeldwerte direkt in den Feldern an.
 cmap='viridis' sorgt für eine moderne, leicht ablesbare Farbpalette.
 Falls du noch weitere Koordinaten oder eine höhere Auflösung hast, skaliert dieses Skript automatisch mit!
+
+https://www.geeksforgeeks.org/python/display-the-pandas-dataframe-in-heatmap-style/
+https://stackoverflow.com/questions/68325430/plotting-a-heatmap-using-csv-file-data-in-python
