@@ -76,6 +76,7 @@ int main(int argc, char** argv)
         mainmsg( eDebug ) << "read field point set(s) from file - 1 Dimension (field lines) or 2 Dimensions (field maps)" << eom;
         FieldPointSetReader readFileSet( tInputFileName, pointSets);
     }
+
     // ------------------------------------------------
     // define point sets for all fields - tFieldObjects
     // ------------------------------------------------
@@ -218,6 +219,117 @@ int main(int argc, char** argv)
 
 // TODO: KThreeVector tElectricField
 
+/////////////////
+// Field lines //
+/////////////////
+
+
+if( tMode==3 ) { // mode = 3 : compute field along field line
+    mainmsg( eDebug ) << "compute and set field points set defined by the magnetic field - 1 Dimension (field lines)" << eom;
+
+    // start point
+    KThreeVector tFieldPoint(0.031, 0., 0.4746);
+    const double ds=0.001/4.;
+    //const unsigned int imax=5000000;
+    const unsigned int imax=500000;
+    double n[3];
+
+    // field lines: for-loop over tFieldObjects
+    for (auto& tFieldObject : tMagneticFields)
+    {
+        // field lines: for-loop over field point sets
+        FieldPointGenerator fieldGen( string("fieldlines-")+tFieldObject->GetName() );
+        if(!tFieldObject->IsInitialized()) tFieldObject->Initialize();
+
+        mainmsg(eNormal) << "START: Computation of fields with config " << fieldGen.GetName() << " by " << tFieldObject->GetName() << " for " << imax << " points."<< eom;
+        tTimeSum = 0;
+        for( unsigned int i=0; i<imax; i++ )
+        {
+            double magn=0.;
+
+            mainmsg( eDebug ) << fieldGen.theResultVector.size() << "  " << fieldGen.GetName() << eom;
+            
+            try
+            {
+                mainmsg( eDebug ) << "position: " << tFieldPoint << eom;
+                
+                // setting start time for field config with point set pointSets.at(i)
+                tStartTime = GetTimeMs64();
+
+                tFieldObject->CalculateField(tFieldPoint, 0.0, tMagneticField);
+                //tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
+                
+                tStopTime = GetTimeMs64();
+                tTimeSum += (tStopTime - tStartTime);
+                // store field value to vector, memory consuming part!
+                fieldGen.SetPositionAndFieldToResultVector( tFieldPoint, tMagneticField );
+
+                // normal direction vector and magnitude of field
+                magn = tMagneticField.Magnitude();
+                n[0] = -tMagneticField[0] / magn;
+                n[1] = -tMagneticField[1] / magn;
+                n[2] = -tMagneticField[2] / magn;
+
+                tFieldPoint[0] += ds * n[0];
+                tFieldPoint[1] += ds * n[1];
+                tFieldPoint[2] += ds * n[2];
+            } // try
+            catch (...)
+            {
+                int tIndex = 0;
+                mainmsg(eWarning) << "> error processing index <" << tIndex << "> - cannot calculate field at position <" << tFieldPoint<< ">" << eom;
+                continue;
+            } // catch
+
+            pointSets.push_back( fieldGen );
+        } // imax points
+            
+            mainmsg(eNormal) << "> END: Elapsed time for field <" << tFieldObject->GetName() << "> and config " << fieldGen.GetName() << " with " << fieldGen.theResultVector.size() << " values is <" << tTimeSum << "> ms " << eom;
+            mainmsg(eNormal) << eom;
+
+            // n.b. for magfield coils the count of computed field points field and used
+            // calculation method does not work, instead the values will be summes up and
+            // have to be computed manually
+            tFieldObject->Deinitialize();
+
+            // --------------------------------------
+            // field lines: writing field line positions and results to files
+            // --------------------------------------
+
+            if( writeToFiles ) {
+
+                katrin::KTextFile* outputFile = katrin::KTextFile::CreateOutputTextFile("./" , string(fieldGen.GetName()+".csv"));
+                mainmsg(eNormal) << "WRITING results to file " << outputFile->GetDefaultPath() << "/" << outputFile->GetDefaultBase() << eom;
+                mainmsg( eNormal) << "label: " << fieldGen.GetName() << eom;
+                outputFile->Open(KFile::eWrite);
+                fstream& file1=*(outputFile->File());
+                if (!file1.is_open()) {
+                    mainmsg(eError) << "Fehler: Konnte Datei " << string(fieldGen.GetName()+".csv") << " nicht oeffnen!" << eom;
+                    return 1;
+                }
+                file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
+
+                for (unsigned int m = 0; m < fieldGen.theResultVector.size(); m++) {
+                    file1 << m << "\t" << std::scientific << std::setprecision( myPrecision )
+                    << fieldGen.theResultVector[m].myPosition[0] << "\t"
+                    << fieldGen.theResultVector[m].myPosition[1] << "\t"
+                    << fieldGen.theResultVector[m].myPosition[2] << "\t"
+                    << fieldGen.theResultVector[m].myField[0] << "\t"
+                    << fieldGen.theResultVector[m].myField[1] << "\t"
+                    << fieldGen.theResultVector[m].myField[2] << "\t"
+                    << fieldGen.theResultVector[m].myField.Magnitude() << "\n";
+                }
+
+                outputFile->Close();
+
+            } // if-write to files
+
+    } // for - loop over tFieldObjects
+
+ } // if-mode 3 (field lines)
+
+if( tMode==3 ) goto label;
+
     // ----------------------------------
     // for-loop over tFieldObjects
     // ----------------------------------
@@ -325,6 +437,8 @@ int main(int argc, char** argv)
             } // if-write to files
         } // point set
     } // for - loop over tFieldObjects
+
+label:
 
     for (size_t tIndex = 3; tIndex < tParameters.size(); tIndex++) {
         KSMagneticField* tMagneticFieldObject = getMagneticField(tParameters[tIndex]);
