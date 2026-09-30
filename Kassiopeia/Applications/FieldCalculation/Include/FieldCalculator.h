@@ -195,8 +195,6 @@ class FieldPointGenerator{
         // the input file defines the number of points, no scale, 1-dim case, empty container for field points, mode=3
         FieldPointGenerator( const std::string& label )
         {
-
-            
             SetName( label );
             SetDim( 1 );
 
@@ -233,6 +231,7 @@ class FieldPointGenerator{
             temp.myPosition.SetComponents( inputPos );
             temp.myField.SetComponents( inputField );
             theResultVector.push_back( temp );
+            //theResultVector.emplace_back(tResult{inputPos, inputField});
         };
         
         std::vector<tResult> theResultVector;
