@@ -1,7 +1,7 @@
 #ifndef Kassiopeia_FieldCalculator_h_
 #define Kassiopeia_FieldCalculator_h_
 
-// Update: 28.09.2026
+// Update: 30.09.2026
 
 #include "KThreeVector.hh"
 

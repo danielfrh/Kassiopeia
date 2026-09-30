@@ -1,5 +1,5 @@
 // Version 2
-// Update: 28.09.2026
+// Update: 30.09.2026
 
 #include "KMessage.h"
 #include "KRandom.h"
@@ -228,13 +228,29 @@ if( tMode==3 )
 {
     pointSets.clear();
 
-    mainmsg( eDebug ) << "compute and set field points set defined by the magnetic field - 1 Dimension (field lines)" << eom;
+    ifstream input;
+    input.open(tInputFileName.c_str());
+    mainmsg( eNormal ) << "tInputFileName: " << tInputFileName << eom;
 
+
+    if (!input.is_open()) {
+        puts("Cannot open the  input source file!");
+        puts("Program running is stopped !!! ");
+        exit(1);
+    }
+
+    // number of field line points
+    unsigned int fieldlinePoints = 1;
     // start point
-    KThreeVector tFieldPoint(0.031, 0., 0.4746);
-    const double ds=0.001/4.;
-    //const unsigned int imax=5000000;
-    const unsigned int imax=50000;
+    KThreeVector tFieldPoint(0., 0., 0.);
+    input >> fieldlinePoints;
+    // step size
+    double stepSize=0.001;
+    input >> stepSize;
+    input >> tFieldPoint[0] >> tFieldPoint[1] >> tFieldPoint[2];
+
+    mainmsg( eNormal ) << "compute and set field points set defined by the magnetic field - 1 Dimension (field lines)" << eom;
+    mainmsg( eNormal ) << "no. of points: " << fieldlinePoints << "  stepsize: " << stepSize << "  startpoint: " << tFieldPoint[0] << "  " << tFieldPoint[1] << "  " << tFieldPoint[2] << eom;
     KThreeVector n;
 
     // field lines: for-loop over tFieldObjects
@@ -243,12 +259,12 @@ if( tMode==3 )
         // field lines: for-loop over field point sets
         FieldPointGenerator fieldGen( string("fieldlines-")+tFieldObject->GetName() );
         if(!tFieldObject->IsInitialized()) tFieldObject->Initialize();
-        mainmsg(eNormal) << "START: Computation of fields with config " << fieldGen.GetName() << " by " << tFieldObject->GetName() << " for " << imax << " points."<< eom;
+        mainmsg(eNormal) << "START: Computation of fields with config " << fieldGen.GetName() << " by " << tFieldObject->GetName() << " for " << fieldlinePoints << " points."<< eom;
         tTimeSum = 0;
-        //fieldGen.theResultVector.clear();
-        //fieldGen.theResultVector.reserve( imax );
+
+        //fieldGen.theResultVector.reserve( fieldlinePoints );
         double magnPrefac = 0.;
-        for( unsigned int i=0; i<imax; i++ )
+        for( unsigned int i=0; i<fieldlinePoints; i++ )
         {
             mainmsg( eDebug ) << fieldGen.theResultVector.size() << "  " << fieldGen.GetName() << eom;
 
@@ -262,7 +278,7 @@ if( tMode==3 )
                 tFieldObject->CalculateField(tFieldPoint, 0.0, tMagneticField);
                 //tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
                 mainmsg( eDebug )  << "(i), size: " << i << fieldGen.theResultVector.size()  << eom;
-                
+
                 tStopTime = GetTimeMs64();
                 tTimeSum += (tStopTime - tStartTime);
                 // store field value to vector, memory consuming part!
@@ -271,7 +287,7 @@ if( tMode==3 )
                 // normal direction vector and magnitude of field
                 magnPrefac = -1./tMagneticField.Magnitude();
                 n = magnPrefac*tMagneticField;
-                tFieldPoint += ds * n;
+                tFieldPoint += stepSize * n;
             } // try
             catch (...)
             {
