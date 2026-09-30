@@ -372,14 +372,7 @@ if( tMode==3 ) goto label;
             for ( unsigned int j = 0; j < it1PointSets.theResultVector.size(); j++)
             {
                 try
-                {
-                    //pmagfield->MagfieldElliptic(P, B);
-                    //bell=sqrt(B[1]*B[1]+B[2]*B[2]+B[0]*B[0]);
-                    //bool zonal = pmagfield->Magfield(P, B);
-                    
-                    //BField = magfieldCoils.MagneticField(pos);
-                    //BField = integratingFieldSolver.MagneticField(pos);
-                    
+                {   
                     mainmsg( eDebug ) << "position: " << it1PointSets.theResultVector[j].myPosition << eom;
                     
                     // setting start time for field config with point set pointSets.at(i)
@@ -394,17 +387,11 @@ if( tMode==3 ) goto label;
                     // store field value to vector
                     it1PointSets.theResultVector[j].myField = tMagneticField;
 
-                    // for (int j = 0; j <= 2; j++) {
-                    //     n[j] = -BField[j] / b;
-                    //     pos[j] += ds * n[j];
-                    // }
-
                 } // try
                 catch (...)
                 {
                     int tIndex = 0;
-                    mainmsg(eWarning) << "> error processing index <" << tIndex << "> - cannot calculate field at position <"
-                        << it1PointSets.theResultVector[j].myPosition << ">" << eom;
+                    mainmsg(eWarning) << "> error processing index <" << tIndex << "> - cannot calculate field at position <" << it1PointSets.theResultVector[j].myPosition << ">" << eom;
                     continue;
                 } // catch
 
