@@ -88,8 +88,8 @@ int main(int argc, char** argv)
         readCenterPoint[1] = -1. * readCenterPoint[1];
 
         // rotation
-        readEulerAngles[0] += readEulerAngles[0] + 90.;
-        //readEulerAngles[1] += readEulerAngles[1] + 90.;
+        readEulerAngles[0] = readEulerAngles[0] + 180.;
+        //readEulerAngles[1] = readEulerAngles[1] + 180.;
 
         Coil myCoil( coilName.str(), readCurrent, readTurns, readCenterPoint, readEulerAngles, readLength, readRmin, readRmax );
 
