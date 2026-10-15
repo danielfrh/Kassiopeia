@@ -5,6 +5,7 @@ if (Kassiopeia_ENABLE_APP)
 
     list( APPEND APPLICATIONS_OTHER_BASENAMES
         DumpMagnetGeometry
+        Transform_Input
     )
 
     if( Kassiopeia_USE_ROOT )
