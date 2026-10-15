@@ -123,7 +123,7 @@ std::string KMagfieldCoilsFieldSolver::WriteCoilFile(katrin::KTextFile* aFile, K
             }
 #endif
 
-            *tStream << std::scientific << std::setprecision(16)
+            *tStream << std::scientific << std::setprecision(12)
                      << tCoil->GetCurrentPerTurn() << "\t"
                      << -1.*tCenter.X() << "\t"
                      << -1.*tCenter.Y() << "\t"
@@ -139,6 +139,7 @@ std::string KMagfieldCoilsFieldSolver::WriteCoilFile(katrin::KTextFile* aFile, K
     }
 
     aFile->Close();
+    
     return tFileName;
 }
 
