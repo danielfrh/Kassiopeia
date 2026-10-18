@@ -29,6 +29,7 @@ using namespace katrin;
 // argv[2]: Name of the simulation output
 
 // Updates:
+// 18.10.2026: Rotation to MagfieldCoils moved and trafo -x/-y removed
 // 15.10.2026: Trafo of x- and y-coord. and rotation added
 // 13.10.2026: Initial version
 
@@ -84,11 +85,11 @@ int main(int argc, char** argv)
         inputCoils >> readTurns >> readLength >> readRmin >> readRmax;
 
         // coord trafo needed for Kassiopeia XML
-        readCenterPoint[0] = -1. * readCenterPoint[0];
-        readCenterPoint[1] = -1. * readCenterPoint[1];
+        //readCenterPoint[0] = -1. * readCenterPoint[0];
+        //readCenterPoint[1] = -1. * readCenterPoint[1];
 
         // rotation
-        readEulerAngles[0] = readEulerAngles[0] + 180.;
+        //readEulerAngles[0] = readEulerAngles[0] + 180.;
         //readEulerAngles[1] = readEulerAngles[1] + 180.;
 
         Coil myCoil( coilName.str(), readCurrent, readTurns, readCenterPoint, readEulerAngles, readLength, readRmin, readRmax );

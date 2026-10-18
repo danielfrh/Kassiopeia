@@ -272,7 +272,8 @@ void MagfieldCoils::CoilRead()
         fcoil[i][1] = Cx;
         fcoil[i][2] = Cy;
         fcoil[i][3] = Cz;
-        fcoil[i][4] = alpha;
+        // 18.10.2026: added for correct rotation
+        fcoil[i][4] = alpha+180.;
         fcoil[i][5] = beta;
         fcoil[i][6] = tu;
         fcoil[i][7] = L;

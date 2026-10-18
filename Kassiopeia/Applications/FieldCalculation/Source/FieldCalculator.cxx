@@ -46,15 +46,15 @@ int main(int argc, char** argv)
     tParameters.pop_front();  // strip off config file name
 
     // scale: field points between start- and end point
-    const uint64 myScale( 1e7 );
+    const uint64 myScale = 1e7;
 
     // precision for output of values
-    const unsigned int myPrecision( 16 );
+    const unsigned int myPrecision = 16;
     KMessageTable::GetInstance().SetPrecision( myPrecision );
     cout.precision( myPrecision );
 
-    // dimensions: fieldlines (dim 1), field maps (dim 2)
-    short myDimension( 1 );
+    // dimensions: field points (dim 1), field maps (dim 2), field points on circle (dim 21)
+    short myDimension = 1;
 
     // saving different point sets to vector
     std::vector<FieldPointGenerator> pointSets;
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     const string tInputFileName = tParameters[1];
     mainmsg( eDebug ) << "tInputFileName: " << tInputFileName << eom;
 
-    if( tMode==1 ) { // mode = 1 : input file: 1-dim field points (= 1 field point set)
+    if( tMode==1 ) { // mode = 1 : input file: 1-dim field points (= one field point set)
         myDimension = 1;
         mainmsg( eDebug ) << "read one field point set from file - 1 Dimension (field lines) - only 1 dim!" << eom;
         FieldPointGenerator generatorFromFile( "configfile1", tInputFileName );
@@ -245,7 +245,7 @@ if( tMode==3 )
     KThreeVector tFieldPoint(0., 0., 0.);
     input >> fieldlinePoints;
     // step size
-    double stepSize=0.001;
+    double stepSize( 0.001 );
     input >> stepSize;
     input >> tFieldPoint[0] >> tFieldPoint[1] >> tFieldPoint[2];
 
@@ -304,7 +304,7 @@ if( tMode==3 )
         mainmsg(eNormal) << eom;
 
         // n.b. for magfield coils the count of computed field points field and used
-        // calculation method does not work, instead the values will be summes up and
+        // calculation method does not work, instead the values will be summed up and
         // have to be computed manually
         tFieldObject->Deinitialize();
     

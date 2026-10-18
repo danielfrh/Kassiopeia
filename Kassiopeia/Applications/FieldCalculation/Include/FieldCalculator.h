@@ -32,6 +32,7 @@ struct tResult{
 
 class FieldPointGenerator{
     public:
+        // constructor for field points along line (dim 1)
         FieldPointGenerator( const std::string& inLabel, const short& inDim, const uint64& inNo, const KThreeVector& inStart, const KThreeVector& inEnd )
         {
             SetName( inLabel );
@@ -50,17 +51,19 @@ class FieldPointGenerator{
             if( inDim==1 ) {
                 SetDim( inDim );
                 retVal = GenerateFieldPoints1dim();
-            } else {
-                SetDim( inDim );
-                retVal = GenerateFieldPoints2dim();
             };
+            // else if( inDim==2) {
+            //     SetDim( inDim );
+            //     retVal = GenerateFieldPoints2dim();
+            // };
             if( retVal>0 ) mainmsg(eError) << "Field point computation failed." << eom; 
         };
 
+        // constructor for field points in plane = field map, here normal vector needed (dim 2)
         FieldPointGenerator( const std::string& inLabel, const short& inDim, const uint64& inNo, const KThreeVector& inStart, const KThreeVector& inEnd, const KThreeVector& inNormal )
         {
             SetName( inLabel );
-            SetPlaneNormal (inNormal );
+            SetPlaneNormal( inNormal );
             SetNPoints( inNo );
             SetStartPoint( inStart );
             SetEndPoint( inEnd );
@@ -83,6 +86,49 @@ class FieldPointGenerator{
                 mainmsg(eError) << "Field point computation failed."<< eom;
             } 
         };
+
+        // constructor for ciruclar field points (dim 21)
+        FieldPointGenerator( const std::string& inLabel, const short& inDim, const uint64& inNo, const double& inCircleRadius, const KThreeVector& inCircleCenter, const KThreeVector& inNormal )
+        {
+            SetName( inLabel );
+            SetPlaneNormal( inNormal );
+            SetNPoints( inNo );
+            SetCircleCenter( inCircleCenter );
+            SetCircleRadius( inCircleRadius );
+
+            if( noPoints<2 ) {
+                mainmsg( eWarning ) << "Please note that at least 2 points have to be computed, set noPoints=2." << eom;
+                noPoints = 2;
+            };
+            theResultVector.clear();
+
+            int retVal = 0;
+
+            if( inDim==21) {
+                SetDim( inDim );
+                retVal = GenerateFieldPoints2dimCircular();
+            } else {
+                mainmsg(eError) << "Please note that a normal vector for a one-dimensional line has been defined, but this function generates points in a 2-dim. surface. Please reduce dimension." << eom;
+            };
+
+            if( retVal>0 ) {
+                mainmsg(eError) << "Field point computation failed."<< eom;
+            } 
+        };
+
+        // constructor for mode=3, field lines
+        // the input file defines the number of points, no scale, 1-dim case, empty container for field points
+        FieldPointGenerator( const std::string& label )
+        {
+            SetName( label );
+            SetDim( 1 );
+
+            theResultVector.clear();
+        };
+
+
+
+
 
 
         int GenerateFieldPoints1dim( void )
@@ -121,7 +167,7 @@ class FieldPointGenerator{
             KThreeVector v_axis_NonNorm = GetPlaneNormal().Cross( u_axis );
             KThreeVector v_axis = v_axis_NonNorm/v_axis_NonNorm.Magnitude();
 
-            // 4. Diagonale auf das lokale System projizieren (Kantenlaáengen ermitteln)
+            // 4. Diagonale auf das lokale System projizieren (Kantenlaengen ermitteln)
             const double Lu = diagVec.Dot(u_axis);
             const double Lv = diagVec.Dot(v_axis);
     
@@ -135,7 +181,7 @@ class FieldPointGenerator{
             if (step_u <= 0) step_u = GetNPoints();
             if (step_v <= 0) step_v = GetNPoints();
 
-             // 6. Äquidistante Punkte generieren
+             // 6. Aequidistante Punkte generieren
             for (double u = 0; u <= width; u += step_u) {
                 for (double v = 0; v <= height; v += step_v) {
                     double sign_u = (Lu >= 0) ? 1.0 : -1.0;
@@ -148,6 +194,48 @@ class FieldPointGenerator{
 
             return 0;
         }
+
+        int GenerateFieldPoints2dimCircular( void )
+        {
+            // 1. Normalenvektor normieren
+            const double lengthNormal = GetPlaneNormal().Magnitude();
+            if( lengthNormal > 1 ){ SetPlaneNormal(GetPlaneNormal()/lengthNormal); };
+
+            // 2. Einen Hilfsvektor finden, der nicht parallel zum Normalenvektor ist
+            KThreeVector helper = {1.0, 0.0, 0.0};
+            if( std::abs(GetPlaneNormal().GetX()) > 0.9) {
+                helper.SetComponents(0.0, 1.0, 0.0); // Fallback für X-ausgerichtete Normalen
+            }
+        
+            // 3. Basisvektoren u und v in der Ebene aufspannen
+            KThreeVector u = helper.Cross( GetPlaneNormal() );
+
+            /// nbormalization
+            u = ( 1./u.Magnitude() ) * u;
+
+            KThreeVector v = GetPlaneNormal().Cross( u ); // Steht senkrecht auf n und u
+
+            // 4. Punkte entlang des Kreisumfangs berechnen
+            for( unsigned int i = 0; i < GetNPoints(); ++i)
+            {
+                double angle = 2.0 * M_PI * i / GetNPoints();
+                double cosA = std::cos( angle );
+                double sinA = std::sin( angle );
+
+                // calcPoint = Center + Radius * (cos(theta)*u + sin(theta)*v)
+
+                KThreeVector center = GetCircleCenter();
+                double radius = GetCircleRadius();
+
+                KThreeVector calcPoint( center.GetX() + radius * (cosA * u.GetX() + sinA * v.GetX()),
+                    center.GetY() + radius * (cosA * u.GetY() + sinA * v.GetY()),
+                    center.GetZ() + radius * (cosA * u.GetZ() + sinA * v.GetZ()));
+                    
+                SetPositionToResultVector( calcPoint );
+                
+            }
+            return 0;
+        };
 
         // the input file defines the number of points, no scale, 1-dim case
         FieldPointGenerator( std::string label, std::string fInputFileName )
@@ -192,14 +280,6 @@ class FieldPointGenerator{
             input.close();
         };
 
-        // the input file defines the number of points, no scale, 1-dim case, empty container for field points, mode=3
-        FieldPointGenerator( const std::string& label )
-        {
-            SetName( label );
-            SetDim( 1 );
-
-            theResultVector.clear();
-        };
 
         void SetName( const std::string& input ){completeName=input;return;};
         std::string GetName() const {return completeName;};
@@ -209,6 +289,12 @@ class FieldPointGenerator{
 
         void SetNPoints( const uint64& input ){noPoints=input;return;};
         uint64 GetNPoints() const {return noPoints;};
+
+        void SetCircleCenter( const KThreeVector& input ) {circleCenter = input; return;};
+        KThreeVector GetCircleCenter() const {return planeNormal;};
+
+        void SetCircleRadius( const double& input ) {circleRadius = input; return;};
+        double GetCircleRadius() const {return circleRadius;};
 
         void SetStartPoint( const KThreeVector& input ){startPoint=input;return;};
         KThreeVector GetStartPoint() const {return startPoint;};
@@ -240,6 +326,8 @@ class FieldPointGenerator{
         string completeName;
         short calcDimensions;
         uint64 noPoints;
+        double circleRadius;
+        KThreeVector circleCenter;
         KThreeVector startPoint;
         KThreeVector endPoint;
         KThreeVector planeNormal;
@@ -304,23 +392,33 @@ class FieldPointSetReader{
         std::string label = ("");
         short tDimension = 0;
         double tScale = 0;
-        KThreeVector start, end, normalV;
+        double circleRadius = 0;
+        KThreeVector start, end, normalV, circleCenter;
     
         // no exponents in input file?
-        for ( unsigned int i = 0; i < fNLines; i++ ) {
-            input >> label >> tDimension >> tScale >> start[0] >> start[1] >> start[2] >> end[0] >> end[1] >> end[2];
-            mainmsg( eDebug ) << label << tDimension << tScale << start[0] << start[1] << start[2] << end[0] << end[1] << end[2];
+        for ( unsigned int i = 0; i < fNLines; i++ )
+        {
+            input >> label >> tDimension >> tScale;
+
             if( tDimension==1 )
             {
+                input >> start[0] >> start[1] >> start[2] >> end[0] >> end[1] >> end[2];
                 FieldPointGenerator myGen(label, tDimension, tScale, start, end);
                 thePointSet.push_back( myGen );
             }
             else if( tDimension==2 )
             {
-                input >> normalV[0] >> normalV[1] >> normalV[2];
+                input >> start[0] >> start[1] >> start[2] >> end[0] >> end[1] >> end[2] >> normalV[0] >> normalV[1] >> normalV[2];
                 mainmsg( eDebug ) << normalV[0] << normalV[1] << normalV[2] << eom;
 
                 FieldPointGenerator myGen(label, tDimension, tScale, start, end, normalV);
+                thePointSet.push_back( myGen );
+            }
+            else if( tDimension==21 )
+            {
+                input >> circleRadius >> circleCenter[0] >> circleCenter[1] >> circleCenter[2] >> normalV[0] >> normalV[1] >> normalV[2];
+
+                FieldPointGenerator myGen(label, tDimension, tScale, circleRadius, circleCenter, normalV);
                 thePointSet.push_back( myGen );
             }
         }
