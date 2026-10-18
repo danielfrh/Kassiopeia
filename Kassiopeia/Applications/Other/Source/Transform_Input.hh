@@ -2,6 +2,8 @@
 #define Transform_Input_h_
 
 #include "KThreeVector.hh"
+#include <iomanip>
+#include <limits>
 
 using namespace std;
 using namespace katrin;
@@ -104,6 +106,7 @@ class XMLFileWriter{
 
     void WriteTubeSpaceElement( std::ostream& out, const Coil &myCoil )
     {
+        out << std::setprecision(16);
         out << "    <tag name=\"magnet_tag\">" << std::endl;
         out << "        <tag name=\"" << myCoil.coilName << "_tag\">" << std::endl;
         out << "            <cylinder_tube_space" << std::endl;
@@ -131,6 +134,7 @@ class XMLFileWriter{
 
     void WriteSpaceElement( std::ostream& out, const Coil &myCoil )
     {
+        out << std::setprecision(16);
         out << "    <space name=\"" << myCoil.coilName << "_space\" tree=\"" << myCoil.coilName << "_cylinder_tube_space\">" << std::endl;
         out << "        <transformation displacement=\"{" << myCoil.coilCenterPoint[0] << "} {" << myCoil.coilCenterPoint[1] << "} {" << myCoil.coilCenterPoint[2] << "}\" rotation_euler=\"{" << myCoil.coilEulerAngles[0] << "} {" << myCoil.coilEulerAngles[1] << "} {" << myCoil.coilEulerAngles[2] << "}\"/>" << std::endl;
         out << "    </space>" << std::endl;
@@ -174,6 +178,7 @@ und deshalb counter-clockwise mit positiven Strom bedeutet Magnetfeld nach Sued
 
     void WriteElectromagnet( std::ostream& out, const Coil &myCoil )
     {
+        out << std::setprecision(16);
         out << "<electromagnet";
         out << "        spaces=\"coils_assembly/" << myCoil.coilName << "_space\"" << std::endl;
         out << "        current=\"" << abs(myCoil.coilCurrent) << "\"" << std::endl;

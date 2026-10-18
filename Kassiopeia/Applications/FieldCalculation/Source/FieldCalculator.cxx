@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 
     const string inMode(tParameters[0]);
     int tMode = stoi(inMode);
-    mainmsg( eNormal ) << "Chosen mode (0 = manual, 1 field point file, 2 field point set file): "<< tMode << eom;
+    mainmsg( eNormal ) << "Chosen mode (0 = manual, 1 field point file, 2 field point set file, 3 compute field along field line): "<< tMode << eom;
 
     // file name
     const string tInputFileName = tParameters[1];
