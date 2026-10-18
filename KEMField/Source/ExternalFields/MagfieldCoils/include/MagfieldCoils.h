@@ -27,7 +27,7 @@ using namespace std;
 //
 // PRINT INPUT COIL GEOMETRY FROM COILREAD()-FUNCTION
 //
-#define PRINTCOILGEO 1
+#define PRINTCOILGEO 0
 
 /* Remove if already defined */
 typedef long long int64;
