@@ -29,7 +29,7 @@ using namespace katrin;
 // argv[2]: Name of the simulation output
 
 // Updates:
-// 18.10.2026: Rotation to MagfieldCoils moved and trafo -x/-y removed
+// 18.10.2026: Rotation and trafo -x/-y to interface class KMagfieldCoilsFieldSolver
 // 15.10.2026: Trafo of x- and y-coord. and rotation added
 // 13.10.2026: Initial version
 
