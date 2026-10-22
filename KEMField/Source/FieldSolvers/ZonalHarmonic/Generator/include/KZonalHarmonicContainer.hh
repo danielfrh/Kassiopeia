@@ -286,14 +286,18 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
              ? fParameters->GetNCentralCoefficients()
              : fParameters->GetNRemoteCoefficients()));
 
+
     if (level == -1) {
         for (auto it = fSubContainers.begin(); it != fSubContainers.end(); ++it)
             delete *it;
         fSubContainers.clear();
         ConstructSubContainers();
+        kem_cout(eNormal) << "Computed source points for " << fSubContainers.size() << " subcontainers." << eom;
     }
 
-    if ((level == -1 && (fSubContainers.size() == 0 || fParameters->GetUseFixedRange())) || level != -1) {
+//    if ((level == -1 && (fSubContainers.size() == 0 || fParameters->GetUseFixedRange())) || level != -1) {
+    if( ( level == -1 && fSubContainers.size() == 0 ) || level != -1 )
+    {
         KZonalHarmonicCoefficientGenerator<Basis> coefficientGenerator(fElementContainer);
 
         fCoordinateSystem = *(coefficientGenerator.GetCoordinateSystem());
@@ -301,12 +305,12 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
         // user-defined source-point extrema are only valid in the top-level coordinate system
         double z1 = 0.;
         double z2 = 0.;
-        if (level == -1) {
+        if( level == -1 ) {
             z1 = fParameters->GetCentralZ1() - fCoordinateSystem.GetOrigin().Z();
             z2 = fParameters->GetCentralZ2() - fCoordinateSystem.GetOrigin().Z();
         }
 
-        if (fParameters->GetCentralFractionalSpacing()) {
+        if( fParameters->GetCentralFractionalSpacing() ) {
             coefficientGenerator.GenerateCentralSourcePointsByFractionalDistance(
                 fCentralSourcePoints,
                 fParameters->GetNCentralCoefficients(),
@@ -314,8 +318,7 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
                 fParameters->GetCentralDeltaZ(),
                 z1,
                 z2);
-        }
-        else {
+        } else {
             coefficientGenerator.GenerateCentralSourcePointsByFixedDistance(
                 fCentralSourcePoints,
                 fParameters->GetNCentralCoefficients(),
@@ -325,7 +328,7 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
         }
 
         z1 = z2 = 0.;
-        if (level == -1) {
+        if( level == -1 ) {
             z1 = fParameters->GetRemoteZ1() - fCoordinateSystem.GetOrigin().Z();
             z2 = fParameters->GetRemoteZ2() - fCoordinateSystem.GetOrigin().Z();
         }
@@ -338,7 +341,7 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
             z2);
     }
 
-    if (!fSubContainers.empty() && !fParameters->GetUseFixedRange()) {
+    if (!fSubContainers.empty()) {
         kem_cout(eNormal) << "Computing source points for " << fSubContainers.size() << " subcontainers at level "
                           << level + 1 << eom;
 

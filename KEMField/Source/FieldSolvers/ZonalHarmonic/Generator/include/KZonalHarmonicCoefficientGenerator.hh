@@ -234,20 +234,29 @@ void KZonalHarmonicCoefficientGenerator<Basis>::GenerateCentralSourcePointsByFix
     if (fabs(z1 - z2) < 1.e-10)
         SourcePointExtrema(z1, z2);
 
-    unsigned int nSPs = (z2 - z1) / deltaZ;
+
+    unsigned int nSPs = ((z2 - z1) / deltaZ) + 1;
+
     if (nSPs == 0)
         nSPs = 1;
 
-    kem_cout(eNormal) << "Computing " << nSPs << " central source points for " << Basis::Name()
+    // if the z positions are still the same, the geometry consists of a single
+    // ring and needs only one source point.
+    if (fabs(z1 - z2) < 1.e-10) {
+        nSPs = 1;
+        deltaZ = 0;
+    }
+
+    kem_cout(eNormal) << "Computing " << nSPs << " central source points with fixed distance for " << Basis::Name()
                       << " along the local z-axis from " << z1 << " to " << z2
                       << " (z0 = " << GetCoordinateSystem()->GetOrigin().Z() << ")." << eom;
 
     KTicker ticker;
     ticker.StartTicker(nSPs);
 
-    for (unsigned int i = 0; i < nSPs; i++) {
+    for (unsigned int i = 0; i <= nSPs; i++) {
         ticker.Tick(i);
-        double z = z1 + deltaZ * i;
+        double z = z1 + (deltaZ * i);
         sps.push_back(GenerateCentralSourcePoint(z, nCoeffs));
     }
 
@@ -279,7 +288,7 @@ void KZonalHarmonicCoefficientGenerator<Basis>::GenerateCentralSourcePointsByFra
     if (fabs(z1 - z2) < 1.e-10)
         SourcePointExtrema(z1, z2);
 
-    kem_cout(eNormal) << "Computing central source points for " << Basis::Name()
+    kem_cout(eNormal) << "Computing central source points with fractional distance for " << Basis::Name()
                       << " along the local z-axis from " << z1 << " to " << z2
                       << " (z0 = " << GetCoordinateSystem()->GetOrigin().Z() << ")." << eom;
 
