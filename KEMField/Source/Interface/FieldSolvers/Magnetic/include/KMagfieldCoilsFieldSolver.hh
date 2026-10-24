@@ -44,7 +44,6 @@ class KMagfieldCoilsFieldSolver : public KMagneticFieldSolver
     KFieldVector MagneticFieldCore(const KPosition& P) const override;
     KGradient MagneticGradientCore(const KPosition& P) const override;
 
-    std::string ModifyAndSaveCoilFile(const std::string& dirName, const std::string& inputFileName);
     std::string WriteCoilFile(katrin::KTextFile* aFile, KElectromagnetContainer& aContainer);
 
   private:
