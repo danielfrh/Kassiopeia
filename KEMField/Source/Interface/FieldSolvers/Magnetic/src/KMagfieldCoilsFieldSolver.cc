@@ -26,58 +26,6 @@ KMagfieldCoilsFieldSolver::KMagfieldCoilsFieldSolver() :
     fDirectExecCount(0)
 {}
 
-std::string KMagfieldCoilsFieldSolver::ModifyAndSaveCoilFile(const std::string& dirName, const std::string& inputFileName)
-{
-    std::ifstream inFile(dirName+inputFileName);
-    if (!inFile.is_open()) {
-        kem_cout(eError) << "Error while trying to open coil input file: " << dirName+inputFileName << eom;
-        return "";
-    }
-    
-    // Define name, path and stream for new coil inpout file
-    
-    katrin::KTextFile* outputFile = katrin::KTextFile::CreateOutputTextFile(dirName, inputFileName + "_modified.txt");
-    outputFile->Open(katrin::KTextFile::eWrite);
-    fstream& outFile=*(outputFile->File());
-
-    if (!outFile.is_open()) {
-        kem_cout(eError) << "Error while creating modified coil input file: " << dirName+inputFileName << eom;
-        return "";
-    }
-
-
-    // 1. Reading number of all coils
-    unsigned int numCoils = 0;
-    if (inFile >> numCoils) {
-        outFile << numCoils << "\n";
-    }
-
-    // 2. Processing row by row, each row consists of 10 columns
-    double v1, v2, v3, v4, v5, v6, v7, v8, v9, v10;
-    while (inFile >> v1 >> v2 >> v3 >> v4 >> v5 >> v6 >> v7 >> v8 >> v9 >> v10) {
-        // increasing the 5th column by 180 degree (first Euler angle)
-        v5 += 180.0;
-
-        // Writing values to new file
-        outFile << std::scientific << std::setprecision(16)
-                << v1 << "\t"
-                << v2 << "\t"
-                << v3 << "\t"
-                << v4 << "\t"
-                << v5 << "\t"
-                << v6 << "\t"
-                << v7 << "\t"
-                << v8 << "\t"
-                << v9 << "\t"
-                << v10 << "\t"
-                << "\n";
-    }
-
-   outputFile->Close();
-
-    return dirName+inputFileName;
-}
-
 
 std::string KMagfieldCoilsFieldSolver::WriteCoilFile(katrin::KTextFile* aFile, KElectromagnetContainer& aContainer)
 { 
@@ -214,37 +162,21 @@ void KMagfieldCoilsFieldSolver::InitializeCore(KElectromagnetContainer& aContain
     
     string tCoilFileName = tDirName + fCoilFileName;
 
-    std::string tModifiedCoilFileName("");
-
     if (fReplaceFile)
     {
         tCoilFileName = WriteCoilFile(tCoilFile, aContainer);  // update filename of created file
         kem_cout(eNormal) << "initializing MagfieldCoils solver with file <" << tCoilFileName << ">" << eom;
-
-        // Modification of MagfieldCoils Input file, read out existing coil inout and increase 5th colum (=first Euler angle by 180 degree)
-        tModifiedCoilFileName = ModifyAndSaveCoilFile(tDirName, fCoilFileName);
     }
     else
     {
-        if (katrin::KFile::Test(tCoilFileName))
-        {
+        if (katrin::KFile::Test(tCoilFileName)) {
             kem_cout(eNormal) << "initializing MagfieldCoils solver with existing file <" << tCoilFileName << ">" << eom;
-
-            // Modification of MagfieldCoils Input file, read out existing coil inout and increase 5th colum (=first Euler angle by 180 degree)
-            tModifiedCoilFileName = ModifyAndSaveCoilFile(tDirName, fCoilFileName);
-        }
-        else 
-        {
+        } else {
             kem_cout(eError) << "cannot initialize MagfieldCoils solver with missing file <" << tCoilFileName << ">" << eom;
         }
     }
 
-        if (!tModifiedCoilFileName.empty()) {
-        // update file name for coil input
-        tCoilFileName = tModifiedCoilFileName;
-    }
-
-    kem_cout_debug("sourcepoint files are begin written to <" << tDirName + tObjectName+"*.txt" << eom);
+    kem_cout(eDebug) << "MagfieldCoils input file has been written to <" << tDirName + tObjectName+"*.txt>" << eom;
     fSolver = std::make_shared<MagfieldCoils>(tDirName, tObjectName, tCoilFileName, fNElliptic, fNMax, fEpsTol);
 }
 
