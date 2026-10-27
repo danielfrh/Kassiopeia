@@ -234,7 +234,8 @@ void KZonalHarmonicCoefficientGenerator<Basis>::GenerateCentralSourcePointsByFix
     if (fabs(z1 - z2) < 1.e-10)
         SourcePointExtrema(z1, z2);
 
-    unsigned int nSPs = (z2 - z1) / deltaZ;
+    unsigned int nSPs = ((z2 - z1) / deltaZ) + 1;
+
     if (nSPs == 0)
         nSPs = 1;
 

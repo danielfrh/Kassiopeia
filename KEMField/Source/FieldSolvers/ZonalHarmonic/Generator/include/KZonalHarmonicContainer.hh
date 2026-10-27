@@ -339,7 +339,7 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
     }
 
     if (!fSubContainers.empty() && !fParameters->GetUseFixedRange()) {
-        kem_cout(eNormal) << "Computing source points for " << fSubContainers.size() << " subcontainers at level "
+        kem_cout(eNormal) << "Computing source coefficients for " << fSubContainers.size() << " subcontainers at level "
                           << level + 1 << eom;
 
         for (auto it = fSubContainers.begin(); it != fSubContainers.end(); ++it)
