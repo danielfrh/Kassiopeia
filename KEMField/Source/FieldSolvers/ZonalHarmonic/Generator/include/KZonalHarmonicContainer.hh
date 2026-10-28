@@ -293,7 +293,8 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
         ConstructSubContainers();
     }
 
-    if ((level == -1 && (fSubContainers.size() == 0 || fParameters->GetUseFixedRange())) || level != -1) {
+    // condition to be checked for both cases: SPs by fixed and fractional distance
+    if ( (level == -1 && (fSubContainers.size() == 0) ) || level != -1) {
         KZonalHarmonicCoefficientGenerator<Basis> coefficientGenerator(fElementContainer);
 
         fCoordinateSystem = *(coefficientGenerator.GetCoordinateSystem());
@@ -338,8 +339,9 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
             z2);
     }
 
-    if (!fSubContainers.empty() && !fParameters->GetUseFixedRange()) {
-        kem_cout(eNormal) << "Computing source coefficients for " << fSubContainers.size() << " subcontainers at level "
+    // function to be called for both cases: SPs by fixed and fractional distance
+    if( !fSubContainers.empty() ) {
+        kem_cout(eNormal) << "Computing coefficients for " << fSubContainers.size() << " subcontainers at level "
                           << level + 1 << eom;
 
         for (auto it = fSubContainers.begin(); it != fSubContainers.end(); ++it)
