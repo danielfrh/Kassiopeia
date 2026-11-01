@@ -294,7 +294,8 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
     }
 
     // condition to be checked for both cases: SPs by fixed and fractional distance
-    if ( (level == -1 && (fSubContainers.size() == 0) ) || level != -1) {
+//  if ((level == -1 && (fSubContainers.size() == 0 || fParameters->GetUseFixedRange())) || level != -1) {
+    if ((level == -1 && (fSubContainers.size() == 0)) || level != -1) {
         KZonalHarmonicCoefficientGenerator<Basis> coefficientGenerator(fElementContainer);
 
         fCoordinateSystem = *(coefficientGenerator.GetCoordinateSystem());
@@ -340,7 +341,8 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
     }
 
     // function to be called for both cases: SPs by fixed and fractional distance
-    if( !fSubContainers.empty() ) {
+//  if (!fSubContainers.empty() && !fParameters->GetUseFixedRange()) {
+    if (!fSubContainers.empty()) {
         kem_cout(eNormal) << "Computing coefficients for " << fSubContainers.size() << " subcontainers at level "
                           << level + 1 << eom;
 
