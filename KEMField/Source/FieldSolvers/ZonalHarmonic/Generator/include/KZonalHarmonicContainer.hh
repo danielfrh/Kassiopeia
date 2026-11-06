@@ -293,8 +293,22 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
         ConstructSubContainers();
     }
 
-    // condition to be checked for both cases: SPs by fixed and fractional distance
-//  if ((level == -1 && (fSubContainers.size() == 0 || fParameters->GetUseFixedRange())) || level != -1) {
+    // from the XML parameter for using fixed source point range, the parameter for fractional source point distance is defined
+    // the default value for fixed source point ditance is false
+    //
+    // but only the parameter for central source point spacing defines within the code if the source points are in a fixed or fractional distance
+    if( fParameters->GetUseFixedRange() == false )
+        fParameters->SetCentralFractionalSpacing( true );
+
+    if( fParameters->GetUseFixedRange() == true )
+        fParameters->SetCentralFractionalSpacing( false );
+        
+    kem_cout(eNormal) << "Defining parameter for source point distance calculation (fractional or fixed):"<< ret;
+    kem_cout(eNormal) << "* Fractional distance (true, false): " << fParameters->GetCentralFractionalSpacing() << ret;
+    kem_cout(eNormal) << "* Fixed distance (true, false): " << fParameters->GetUseFixedRange() << eom;
+
+    // condition to be independent from two cases for SPs by fixed and fractional distance in order
+    // to process different coordinate systems correctly
     if ((level == -1 && (fSubContainers.size() == 0)) || level != -1) {
         KZonalHarmonicCoefficientGenerator<Basis> coefficientGenerator(fElementContainer);
 
@@ -340,8 +354,7 @@ template<class Basis> void KZonalHarmonicContainer<Basis>::ComputeCoefficients(i
             z2);
     }
 
-    // function to be called for both cases: SPs by fixed and fractional distance
-//  if (!fSubContainers.empty() && !fParameters->GetUseFixedRange()) {
+// condition to be independent from two cases for SPs by fixed and fractional distance in order to process different coordinate systems correctly
     if (!fSubContainers.empty()) {
         kem_cout(eNormal) << "Computing coefficients for " << fSubContainers.size() << " subcontainers at level "
                           << level + 1 << eom;

@@ -236,9 +236,6 @@ void KZonalHarmonicCoefficientGenerator<Basis>::GenerateCentralSourcePointsByFix
 
     unsigned int nSPs = ((z2 - z1) / deltaZ) + 1;
 
-    if (nSPs == 0)
-        nSPs = 1;
-
     kem_cout(eNormal) << "Computing " << nSPs << " central source points by fixed distance for " << Basis::Name()
                       << " along the local z-axis from " << z1 << " to " << z2
                       << " (z0 = " << GetCoordinateSystem()->GetOrigin().Z() << ")." << eom;
@@ -248,7 +245,7 @@ void KZonalHarmonicCoefficientGenerator<Basis>::GenerateCentralSourcePointsByFix
 
     for (unsigned int i = 0; i < nSPs; i++) {
         ticker.Tick(i);
-        double z = z1 + deltaZ * i;
+        double z = z1 + (deltaZ * i);
         sps.push_back(GenerateCentralSourcePoint(z, nCoeffs));
     }
 
@@ -353,7 +350,7 @@ void KZonalHarmonicCoefficientGenerator<Basis>::GenerateRemoteSourcePoints(std::
 
     for (unsigned int i = 0; i < nSPs; i++) {
         ticker.Tick(i);
-        double z = z1 + deltaZ * i;
+        double z = z1 + (deltaZ * i);
         sps.push_back(GenerateRemoteSourcePoint(z, nCoeffs));
     }
 
