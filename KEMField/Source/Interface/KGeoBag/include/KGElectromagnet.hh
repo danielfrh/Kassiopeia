@@ -11,9 +11,9 @@ namespace KGeoBag
 class KGElectromagnetData
 {
   public:
-    KGElectromagnetData() : fLineCurrent(0.), fCurrentTurns(1.), fAllowNonIntTurns(false) {}
-    KGElectromagnetData(KGSpace*) : fLineCurrent(0.), fCurrentTurns(1.), fAllowNonIntTurns(false) {}
-    KGElectromagnetData(KGSurface*) : fLineCurrent(0.), fCurrentTurns(1.), fAllowNonIntTurns(false) {}
+    KGElectromagnetData() : fLineCurrent(0.), fCurrentTurns(1.), fAllowNonIntTurns(true) {}
+    KGElectromagnetData(KGSpace*) : fLineCurrent(0.), fCurrentTurns(1.), fAllowNonIntTurns(true) {}
+    KGElectromagnetData(KGSurface*) : fLineCurrent(0.), fCurrentTurns(1.), fAllowNonIntTurns(true) {}
     KGElectromagnetData(KGSpace*, const KGElectromagnetData& aCopy) :
         fLineCurrent(aCopy.fLineCurrent),
         fCurrentTurns(aCopy.fCurrentTurns),
