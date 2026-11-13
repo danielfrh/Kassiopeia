@@ -1,11 +1,11 @@
 // Version 2
-// Update: 30.09.2026
+// Update: 13.11.2026
 
 #include "KMessage.h"
 #include "KRandom.h"
 #include "KSFieldFinder.h"
 #include "KSMainMessage.h"
-#include "KSRootMagneticField.h"
+#include "KSRootElectricField.h"
 #include "KTextFile.h"
 #include "KThreeMatrix.hh"
 #include "KThreeVector.hh"
@@ -16,12 +16,14 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef KEMFIELD_USE_PETSC
+#include "KPETScInterface.hh"
+#elif KEMFIELD_USE_MPI
+#include "KMPIInterface.hh"
+#endif
+
 // time measurement, field point generator and field point set reader
 #include "FieldCalculator.h"
-
-#define ELECTRIC 0
-#define MAGNETIC 1
-
 
 int main(int argc, char** argv)
 {
@@ -189,35 +191,27 @@ int main(int argc, char** argv)
     Converter >> writeToFiles;
     mainmsg( eDebug ) << "writeToFiles: " << writeToFiles << eom;
 
-    // initialitzing variables for measurement of computation times
+    // initializing variables for measurement of computation times
     uint64 tStartTime( 0 );
     uint64 tStopTime( 0 );
     uint64 tTimeSum( 0 );
 
-#ifdef MAGNETIC
-#if MAGNETIC == 1
-
     // -----------------------
-    // init of magnetic fields
+    // init of electric fields
     // -----------------------
 
     // initialize magnetic field
     std::vector<KSMagneticField*> tMagneticFields;
 
     for (size_t tIndex = 3; tIndex < tParameters.size(); tIndex++) {
-        KSMagneticField* tMagneticFieldObject = getMagneticField(tParameters[tIndex]);
-        tMagneticFieldObject->Initialize();
-        mainmsg(eNormal) << "Initialization of " << tMagneticFieldObject->GetName() << " finished." << eom << eom;
-        tMagneticFields.push_back(tMagneticFieldObject);
+        KSElectricField* tElectricFieldObject = getElectricField(tParameters[tIndex]);
+        tElectricFieldObject->Initialize();
+        mainmsg(eNormal) << "Initialization of " << tElectricFieldObject->GetName() << " finished." << eom << eom;
+        tElectricFields.push_back(tElectricFieldObject);
     }
 
-    KThreeVector tMagneticField;
-    // TODO: KThreeMatrix tMagneticFieldGradient;
-
-#endif
-#endif
-
-// TODO: KThreeVector tElectricField
+    KThreeVector tElectricField;
+    double tPotential;
 
 /////////////////
 // Field lines //
@@ -249,12 +243,12 @@ if( tMode==3 )
     input >> stepSize;
     input >> tFieldPoint[0] >> tFieldPoint[1] >> tFieldPoint[2];
 
-    mainmsg( eNormal ) << "compute and set field points set defined by the magnetic field - 1 Dimension (field lines)" << eom;
+    mainmsg( eNormal ) << "compute and set field points set defined by the electric field - 1 Dimension (field lines)" << eom;
     mainmsg( eNormal ) << "no. of points: " << fieldlinePoints << "  stepsize: " << stepSize << "  startpoint: " << tFieldPoint[0] << "  " << tFieldPoint[1] << "  " << tFieldPoint[2] << eom;
     KThreeVector n;
 
     // field lines: for-loop over tFieldObjects
-    for (auto& tFieldObject : tMagneticFields)
+    for (auto& tFieldObject : tElectricFields)
     {
         // field lines: for-loop over field point sets
         FieldPointGenerator fieldGen( string("fieldlines-")+tFieldObject->GetName() );
@@ -275,14 +269,17 @@ if( tMode==3 )
                 // setting start time for field config with point set pointSets.at(i)
                 tStartTime = GetTimeMs64();
 
-                tFieldObject->CalculateField(tFieldPoint, 0.0, tMagneticField);
+                //tRootElectricField.CalculateFieldAndPotential( tPosition, 0., tElectricField, tPotential );  // FIXME: do not use this (issue #144)
+                tRootElectricField.CalculateField(tPosition, 0.0, tElectricField);
+                tRootElectricField.CalculatePotential(tPosition, 0.0, tPotential);
+                tFieldObject->CalculateField(tFieldPoint, 0.0, tElectricField);
                 //tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
                 mainmsg( eDebug )  << "(i), size: " << i << fieldGen.theResultVector.size()  << eom;
 
                 tStopTime = GetTimeMs64();
                 tTimeSum += (tStopTime - tStartTime);
                 // store field value to vector, memory consuming part!
-                fieldGen.SetPositionAndFieldToResultVector( tFieldPoint, tMagneticField );
+                fieldGen.SetPositionAndFieldToResultVector( tFieldPoint, tElectricField );
 
                 // normal direction vector and magnitude of field
                 magnPrefac = -1./tMagneticField.Magnitude();
@@ -349,7 +346,7 @@ if( tMode==3 ) goto label;
     // ----------------------------------
     // for-loop over tFieldObjects
     // ----------------------------------
-    for (auto& tFieldObject : tMagneticFields)
+    for (auto& tFieldObject : ElecrticFields)
     {
         // ------------------------------
         // for-loop over field point sets

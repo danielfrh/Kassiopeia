@@ -6,7 +6,8 @@ if (Kassiopeia_ENABLE_APP)
     )
 
     set( APPLICATIONS_FIELDS_SOURCE_BASENAMES
-        FieldCalculator
+        FieldCalculatorElectric
+        FieldCalculatorMagnetic
     )
 
     set( APPLICATIONS_FIELDS_BASENAMES
