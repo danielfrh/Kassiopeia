@@ -1,0 +1,1 @@
+FieldCalculatorMagnetic.cxx
