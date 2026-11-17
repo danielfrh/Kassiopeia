@@ -5,7 +5,7 @@ if (Kassiopeia_ENABLE_APP)
 
     list( APPEND APPLICATIONS_OTHER_BASENAMES
         DumpMagnetGeometry
-        Transform_Input
+        KEMFieldHelper_TrafoMagfieldCoilsInput
     )
 
     if( Kassiopeia_USE_ROOT )

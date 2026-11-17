@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-# Study field lines on lines as calculated and stored by Application FieldCalculator
-# N.b. Plotting heat maps hasn't been implemented yet.
+# Compare given field points (z-component of magnetic field B_z) of two field simulations 
+# as calculated and stored by Application FieldCalculatorMagnetic
 
+# arguments of script: file name of field points of magnetic field 1 and file name of field points of magnetic field 1 
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -51,33 +52,33 @@ except ValueError as e:
 cols = ["x","y","z","Bx","By","Bz","absB"]
 j = df1[cols].join(df2[cols], how="inner", lsuffix="_1", rsuffix="_2")
 
-# Differenz (hier: df1 - df2)
-j["dBz"] = j["Bz_1"] - j["Bz_2"]
+# Relative error: (df1 - df2) / df1 wrt first input
+j["dBzBz1"] = (j["Bz_1"] - j["Bz_2"])/j["Bz_1"]
 
-# 2) Plot: z auf x-Achse, Differenz auf y-Achse
-# robust: nach z sortieren (falls Id nicht monoton in z ist)
+# 2) Plot z-component on x-axis, rel. error on y-axis
+# robust: sort with z-component (in the case Id is not monotone against z-component)
 plot_df = j.sort_values("z_1")
 
 plt.figure(figsize=(7,4))
-plt.plot(plot_df["z_1"], plot_df["dBz"], lw=1)
+plt.plot(plot_df["z_1"], plot_df["dBzBz1"], lw=1)
 plt.xlabel("z")
-plt.ylabel("ΔBz = Bz_1 - Bz_2")
-plt.title("Differenz ΔBz über z")
+plt.ylabel("ΔBz/Bz_1 = (Bz_1 - Bz_2)/Bz_1")
+plt.title("Relative Error ΔBz/Bz_1 over z")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-# 3) Maximale Differenz finden + zugehörige Spalten ausgeben
+# 3) Maximal relative error
 # meist sinnvoll: maximale *Betrags*-Differenz
-idx = j["dBz"].abs().idxmax()        # das ist die Id (Index)
+idx = j["dBzBz1"].abs().idxmax()        # Id (Index)
 row = j.loc[idx]
 
-print("\nMaximale |ΔBz| gefunden bei Id =", idx)
+print("\nMaximal relative error |ΔBz|/dBzBz1 found at Id =", idx)
 print("z =", row["z_1"], " (x,y,z) = (", row["x_1"], ",", row["y_1"], ",", row["z_1"], ")")
 print("Bz_1 =", row["Bz_1"])
 print("Bz_2 =", row["Bz_2"])
-print("ΔBz  =", row["dBz"])
-print("|ΔBz|=", abs(row["dBz"]))
+print("ΔBz/Bz_1  =", row["dBzBz1"])
+print("|ΔBz/Bz_1|=", abs(row["dBzBz1"]))
 
 # Alle zugehörigen Feldkomponenten:
 print(row[["x_1","y_1","z_1","Bx_1","By_1","Bz_1","Bx_2","By_2","Bz_2","dBz"]])

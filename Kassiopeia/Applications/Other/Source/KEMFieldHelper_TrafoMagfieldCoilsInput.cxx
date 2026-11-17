@@ -1,4 +1,4 @@
-// Transform MagfieldCoils input to XML for Kassiopeia
+// Transform MagfieldCoils text input to XML for Kassiopeia, KEMField and visualization
 
 #include <cstdlib>
 #include <iostream>
@@ -18,7 +18,7 @@
 #include <sstream>
 
 #include "KThreeVector.hh"
-#include "Transform_Input.hh"
+#include "KEMFieldHelper_TrafoMagfieldCoilsInput.hh"
 
 
 using namespace std;
