@@ -27,9 +27,9 @@
 
 int main(int argc, char** argv)
 {
-    cout << "FieldCalculator: Field calculation field line / map definition and output to text file (both optional in text files), field configs within XML file." << endl;
+    cout << "FieldCalculatorElectric: Field calculation field line / map definition and output to text file (both optional in text files), field configs within XML file." << endl;
     cout << "output (optional): either field lines or field maps in files which can be processed by Python script PlotFields-fromFieldCalculator.py" << endl;
-    cout << "usage: ./FieldCalculator <config_file.xml> <Computation Mode> <Input File> <Write output file (0,1)> <field_name1> [<field_name2> <...>] " << endl << endl;
+    cout << "usage: ./FieldCalculatorElectric <config_file.xml> <Computation Mode> <Input File> <Write output file (0,1)> <field_name1> [<field_name2> <...>] " << endl << endl;
 
     if (argc < 4) {
         cout << "Missing arguments, program stopped!" << endl;
@@ -100,10 +100,10 @@ int main(int argc, char** argv)
             startOnAxis,
             endOnAxis
         );
-        pointSets.push_back( fieldOnAxis );
+        //pointSets.push_back( fieldOnAxis );
 
         // Comparison 1: r=5cm, near z=0, myScale = 1e7 points:
-        const uint64 scaleComp1OffAxis( myScale/100 );
+        const uint64 scaleComp1OffAxis( myScale );
         const short dimensionComp1OffAxis( myDimension );
         const KThreeVector startComp1OffAxis(0., 0.05, -0.025);
         const KThreeVector endComp1OffAxis(0., 0.05, 0.025);
@@ -114,7 +114,7 @@ int main(int argc, char** argv)
             startComp1OffAxis,
             endComp1OffAxis
         );
-        //pointSets.push_back( fieldComp1OffAxis );
+        pointSets.push_back( fieldComp1OffAxis );
 
         // Comparison 1: r=9.5cm, near coils, myScale = 1e7 points:
         const uint64 scaleComp1Remote( myScale );
@@ -194,14 +194,16 @@ int main(int argc, char** argv)
     // initializing variables for measurement of computation times
     uint64 tStartTime( 0 );
     uint64 tStopTime( 0 );
-    uint64 tTimeSum( 0 );
+    uint64 tPotentialTimeSum( 0 );
+    uint64 tFieldTimeSum( 0 );
+    uint64 tIntermediateTime( 0 );
 
     // -----------------------
     // init of electric fields
     // -----------------------
 
-    // initialize magnetic field
-    std::vector<KSMagneticField*> tMagneticFields;
+    // initialize electric field
+    std::vector<KSElectricField*> tElectricFields;
 
     for (size_t tIndex = 3; tIndex < tParameters.size(); tIndex++) {
         KSElectricField* tElectricFieldObject = getElectricField(tParameters[tIndex]);
@@ -213,11 +215,10 @@ int main(int argc, char** argv)
     KThreeVector tElectricField;
     double tPotential;
 
-/////////////////
-// Field lines //
-/////////////////
+////////////////////////////////////////////////////////////
+// Computation of field points along field lines (mode 3) //
+////////////////////////////////////////////////////////////
 
-// mode = 3 : compute field along field line
 if( tMode==3 )
 {
     pointSets.clear();
@@ -254,10 +255,12 @@ if( tMode==3 )
         FieldPointGenerator fieldGen( string("fieldlines-")+tFieldObject->GetName() );
         if(!tFieldObject->IsInitialized()) tFieldObject->Initialize();
         mainmsg(eNormal) << "START: Computation of fields with config " << fieldGen.GetName() << " by " << tFieldObject->GetName() << " for " << fieldlinePoints << " points."<< eom;
-        tTimeSum = 0;
+        tFieldTimeSum = 0;
+        tPotentialTimeSum = 0;
+	tIntermediateTime = 0;
 
         //fieldGen.theResultVector.reserve( fieldlinePoints );
-        double magnPrefac = 0.;
+        double elecPrefac = 0.;
         for( unsigned int i=0; i<fieldlinePoints; i++ )
         {
             mainmsg( eDebug ) << fieldGen.theResultVector.size() << "  " << fieldGen.GetName() << eom;
@@ -269,21 +272,22 @@ if( tMode==3 )
                 // setting start time for field config with point set pointSets.at(i)
                 tStartTime = GetTimeMs64();
 
-                //tRootElectricField.CalculateFieldAndPotential( tPosition, 0., tElectricField, tPotential );  // FIXME: do not use this (issue #144)
-                tRootElectricField.CalculateField(tPosition, 0.0, tElectricField);
-                tRootElectricField.CalculatePotential(tPosition, 0.0, tPotential);
+                //tRootElectricField.CalculateFieldAndPotential( tPosition, 0., tElectricField, tPotential );
+                tFieldObject->CalculatePotential(tFieldPoint, 0.0, tPotential);
+                tIntermediateTime = GetTimeMs64();
+                tPotentialTimeSum += (tIntermediateTime - tStartTime);
                 tFieldObject->CalculateField(tFieldPoint, 0.0, tElectricField);
-                //tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
+
                 mainmsg( eDebug )  << "(i), size: " << i << fieldGen.theResultVector.size()  << eom;
 
                 tStopTime = GetTimeMs64();
-                tTimeSum += (tStopTime - tStartTime);
-                // store field value to vector, memory consuming part!
-                fieldGen.SetPositionAndFieldToResultVector( tFieldPoint, tElectricField );
+                tFieldTimeSum += (tStopTime - tIntermediateTime);
+                // store field and potential value to vector, memory consuming part!
+                fieldGen.SetPositionAndFieldAndPotentialToResultVector( tFieldPoint, tElectricField, tPotential );
 
                 // normal direction vector and magnitude of field
-                magnPrefac = -1./tMagneticField.Magnitude();
-                n = magnPrefac*tMagneticField;
+                elecPrefac = -1./tElectricField.Magnitude();
+                n = elecPrefac*tElectricField;
                 tFieldPoint += stepSize * n;
             } // try
             catch (...)
@@ -297,7 +301,7 @@ if( tMode==3 )
         
         pointSets.push_back( fieldGen );
 
-        mainmsg(eNormal) << "> END: Elapsed time for field <" << tFieldObject->GetName() << "> and config " << fieldGen.GetName() << " with " << fieldGen.theResultVector.size() << " values is <" << tTimeSum << "> ms " << eom;
+        mainmsg(eNormal) << "> END: Elapsed time for field object <" << tFieldObject->GetName() << "> and config " << fieldGen.GetName() << " with " << fieldGen.theResultVector.size() << " values are for potential <" << tPotentialTimeSum << "> ms and field " << tFieldTimeSum << "> ms " << eom;
         mainmsg(eNormal) << eom;
 
         // n.b. for magfield coils the count of computed field points field and used
@@ -320,7 +324,7 @@ if( tMode==3 )
                 mainmsg(eError) << "Fehler: Konnte Datei " << string(fieldGen.GetName()+".csv") << " nicht oeffnen!" << eom;
                 return 1;
             }
-            file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
+            file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Ex" << "\t" << "Ey" << "\t" << "Ez" << "\t" << "Emag" << "\t" << "Pot" << endl;
 
             for (unsigned int m = 0; m < fieldGen.theResultVector.size(); m++) {
                 file1 << m << "\t" << std::scientific << std::setprecision( myPrecision )
@@ -330,7 +334,8 @@ if( tMode==3 )
                 << fieldGen.theResultVector[m].myField[0] << "\t"
                 << fieldGen.theResultVector[m].myField[1] << "\t"
                 << fieldGen.theResultVector[m].myField[2] << "\t"
-                << fieldGen.theResultVector[m].myField.Magnitude() << "\n";
+                << fieldGen.theResultVector[m].myField.Magnitude() << "\t"
+                << fieldGen.theResultVector[m].myPotential << "\n";
             }
 
             outputFile->Close();
@@ -343,10 +348,14 @@ if( tMode==3 )
 
 if( tMode==3 ) goto label;
 
+////////////////////////////////////////////////
+// Field point calculation (modes 0, 1 and 2) //
+////////////////////////////////////////////////
+
     // ----------------------------------
     // for-loop over tFieldObjects
     // ----------------------------------
-    for (auto& tFieldObject : ElecrticFields)
+    for (auto& tFieldObject : tElectricFields)
     {
         // ------------------------------
         // for-loop over field point sets
@@ -361,7 +370,9 @@ if( tMode==3 ) goto label;
             
             if(!tFieldObject->IsInitialized()) tFieldObject->Initialize();
 
-            tTimeSum = 0;
+            tFieldTimeSum = 0;
+            tPotentialTimeSum = 0;
+	        tIntermediateTime = 0;
             
             mainmsg( eDebug ) << it1PointSets.theResultVector.size() << "  " << it1PointSets.GetName() << eom;
             
@@ -375,14 +386,18 @@ if( tMode==3 ) goto label;
                     // setting start time for field config with point set pointSets.at(i)
                     tStartTime = GetTimeMs64();
 
-                    tFieldObject->CalculateField(it1PointSets.theResultVector[j].myPosition, 0.0, tMagneticField);
-                    //tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
+                    //tRootElectricField.CalculateFieldAndPotential( tPosition, 0., tElectricField, tPotential );
+                    tFieldObject->CalculatePotential(it1PointSets.theResultVector[j].myPosition, 0.0, tPotential);
+                    tIntermediateTime = GetTimeMs64();
+                    tPotentialTimeSum += (tIntermediateTime - tStartTime);
+                    tFieldObject->CalculateField(it1PointSets.theResultVector[j].myPosition, 0.0, tElectricField);
                     
                     tStopTime = GetTimeMs64();
+                    tFieldTimeSum += (tStopTime - tIntermediateTime);
 
-                    tTimeSum += (tStopTime - tStartTime);
                     // store field value to vector
-                    it1PointSets.theResultVector[j].myField = tMagneticField;
+                    it1PointSets.theResultVector[j].myPotential = tPotential;
+                    it1PointSets.theResultVector[j].myField = tElectricField;
 
                 } // try
                 catch (...)
@@ -394,7 +409,7 @@ if( tMode==3 ) goto label;
 
             } // for - field single point set
             
-            mainmsg(eNormal) << "> Elapsed time for field <" << tFieldObject->GetName() << "> and config " << it1PointSets.GetName() << " with " << it1PointSets.theResultVector.size() << " values is <" << tTimeSum << "> ms " << eom;
+            mainmsg(eNormal) << "> Elapsed time for field object <" << tFieldObject->GetName() << "> and config " << it1PointSets.GetName() << " with " << it1PointSets.theResultVector.size() << " values are for potential <" << tPotentialTimeSum << "> ms and field <" <<tFieldTimeSum << "> ms" << eom;
             mainmsg(eNormal) << eom;
 
             // n.b. for magfield coils the count of computed field points field and used
@@ -419,7 +434,7 @@ if( tMode==3 ) goto label;
                     mainmsg(eError) << "Fehler: Konnte Datei " << string(it1PointSets.GetName()+".csv") << " nicht oeffnen!" << eom;
                     return 1;
                 }
-                file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
+                file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Ex" << "\t" << "Ey" << "\t" << "Ez" << "\t" << "Emag"<< "\t" << "Pot" << endl;
 
                 for( unsigned int m = 0; m < it1PointSets.theResultVector.size(); m++ ) {
                     file1 << m << "\t" << std::scientific << std::setprecision( myPrecision )
@@ -429,7 +444,8 @@ if( tMode==3 ) goto label;
                     << it1PointSets.theResultVector[m].myField[0] << "\t"
                     << it1PointSets.theResultVector[m].myField[1] << "\t"
                     << it1PointSets.theResultVector[m].myField[2] << "\t"
-                    << it1PointSets.theResultVector[m].myField.Magnitude() << "\n";
+                    << it1PointSets.theResultVector[m].myField.Magnitude() << "\t"
+                    << it1PointSets.theResultVector[m].myPotential << "\t";
                 }
 
                 outputFile->Close();

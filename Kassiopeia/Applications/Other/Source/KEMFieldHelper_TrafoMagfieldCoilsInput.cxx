@@ -1,4 +1,4 @@
-// Transform MagfieldCoils text input to XML for Kassiopeia, KEMField and visualization
+// Transform MagfieldCoils input (=one text file) to XML for Kassiopeia, KEMField and visualization (=> two XML files)
 
 #include <cstdlib>
 #include <iostream>

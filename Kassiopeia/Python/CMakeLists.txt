@@ -3,8 +3,10 @@
 set( KASSIOPEIA_PYTHON_SOURCES
     KassiopeiaReader.py
     Fields/FieldCalculatorElectricHelper-1dim-CompareEmag.py
+    Fields/FieldCalculatorElectricHelper-1dim-CompareEz.py
     Fields/FieldCalculatorElectricHelper-1dim-ComparePotential.py
     Fields/FieldCalculatorElectricHelper-2dim-HeatMapEmag.py
+    Fields/FieldCalculatorElectricHelper-2dim-HeatMapEz.py
     Fields/FieldCalculatorElectricHelper-2dim-HeatMapPotential.py
     Fields/FieldCalculatorHelper-ConvertFieldLinePoints.py
     Fields/FieldCalculatorMagneticHelper-1dim-CompareBmag.py

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+# Script is compatible to output from FieldCalculator_Electric and FieldCalculator_Magnetic.
+
 # Study field lines on lines as calculated and stored by Application FieldCalculator
-# with relative w.r.t. first input 
+# N.b. Plotting heat maps hasn't been implemented yet.
+
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -36,47 +39,47 @@ titles = ["Id","x","y","z","Bx","By","Bz","absB"]
 # names=titles  bedeutet: Ignoriere Spaltennamen aus der Datei und verwende diese hier.
 
 try:
-    df1 = pd.read_csv(dateipfad1, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Bx": float, "By": float, "Bz": float, "absB": float}, skipinitialspace=True)
+    df1 = pd.read_csv(dateipfad1, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Ex": float, "Ey": float, "Ez": float, "Emag": float, "Pot": float}, skipinitialspace=True)
     print( df1 )
 except ValueError as e:
     print(f"Error: {e}")
 
 try:
-    df2 = pd.read_csv(dateipfad2, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Bx": float, "By": float, "Bz": float, "absB": float}, skipinitialspace=True)
+    df2 = pd.read_csv(dateipfad1, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Ex": float, "Ey": float, "Ez": float, "Emag": float, "Pot": float}, skipinitialspace=True)
     print( df2 )
 except ValueError as e:
     print(f"Error: {e}")
 
-cols = ["x","y","z","Bx","By","Bz","absB"]
+cols = ["x","y","z","Ex","Ey","Ez","Emag","Pot"]
 j = df1[cols].join(df2[cols], how="inner", lsuffix="_1", rsuffix="_2")
 
-# Relativer Fehler (hier: (df1 - df2) / df1 )
-j["dBzBz1"] = (j["Bz_1"] - j["Bz_2"])/j["Bz_1"]
+# Definition of relative error: df1 - df2) / df1
+j["dEmagRel"] = (( j["Emag_1"] - j["Emag_2"] ) / j["Emag_1"]).abs()
 
 # 2) Plot: z auf x-Achse, Differenz auf y-Achse
 # robust: nach z sortieren (falls Id nicht monoton in z ist)
 plot_df = j.sort_values("z_1")
 
 plt.figure(figsize=(7,4))
-plt.plot(plot_df["z_1"], plot_df["dBzBz1"], lw=1)
+plt.plot(plot_df["z_1"], plot_df["dEmagRel"], lw=1)
 plt.xlabel("z")
-plt.ylabel("ΔBz/Bz_1 = (Bz_1 - Bz_2)/Bz_1")
-plt.title("Relative Error ΔBz/Bz_1 over z")
+plt.ylabel("ΔEmag/Emag_1 = (Emag_1 - Emag_2)/Emag_1")
+plt.title("Relative Error of magnitude of electric field wrt. Emag_1 against z-coordinate")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-# 3) Maximal relative error
+# 3) Maximale Differenz finden + zugehörige Spalten ausgeben
 # meist sinnvoll: maximale *Betrags*-Differenz
-idx = j["dBzBz1"].abs().idxmax()        # Id (Index)
+idx = j["dEmagRel"].abs().idxmax()        # das ist die Id (Index)
 row = j.loc[idx]
 
-print("\nMaximal relative error |ΔBz|/dBzBz1 found at Id =", idx)
+print("\nMaximal relative error |ΔEmag|/dE_1 found at Id =", idx)
 print("z =", row["z_1"], " (x,y,z) = (", row["x_1"], ",", row["y_1"], ",", row["z_1"], ")")
-print("Bz_1 =", row["Bz_1"])
-print("Bz_2 =", row["Bz_2"])
-print("ΔBz/Bz_1  =", row["dBzBz1"])
-print("|ΔBz/Bz_1|=", abs(row["dBzBz1"]))
+print("Emag_1 =", row["Emag_1"])
+print("Emag_2 =", row["Emag_2"])
+print("ΔEmag  =", row["dEmag"])
+print("|ΔEmag/Emag_1|=", abs(row["dEmagRel"]))
 
 # Alle zugehörigen Feldkomponenten:
-print(row[["x_1","y_1","z_1","Bx_1","By_1","Bz_1","Bx_2","By_2","Bz_2","dBz"]])
+print(row[["x_1","y_1","z_1","Ex_1","Ey_1","Ez_1","Emag_1","Pot_1","Ex_2","Ey_2","Ez_2","Emag_2","Pot_2","dEmagRel"]])

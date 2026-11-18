@@ -6,9 +6,10 @@ if (Kassiopeia_ENABLE_APP)
     )
 
     set( APPLICATIONS_FIELDS_SOURCE_BASENAMES
-        #FieldCalculatorElectric
+        # symbolic link to FieldCalculatorMagnetic:
         FieldCalculator
-	FieldCalculatorMagnetic
+        FieldCalculatorElectric
+        FieldCalculatorMagnetic
     )
 
     set( APPLICATIONS_FIELDS_BASENAMES

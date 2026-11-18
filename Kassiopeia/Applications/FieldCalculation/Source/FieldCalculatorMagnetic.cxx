@@ -1,5 +1,5 @@
 // Version 2
-// Update: 30.09.2026
+// Update: 13.11.2026
 
 #include "KMessage.h"
 #include "KRandom.h"
@@ -23,9 +23,9 @@
 
 int main(int argc, char** argv)
 {
-    cout << "FieldCalculator: Field calculation field line / map definition and output to text file (both optional in text files), field configs within XML file." << endl;
+    cout << "FieldCalculatorMagnetic: Field calculation field line / map definition and output to text file (both optional in text files), field configs within XML file." << endl;
     cout << "output (optional): either field lines or field maps in files which can be processed by Python script PlotFields-fromFieldCalculator.py" << endl;
-    cout << "usage: ./FieldCalculator <config_file.xml> <Computation Mode> <Input File> <Write output file (0,1)> <field_name1> [<field_name2> <...>] " << endl << endl;
+    cout << "usage: ./FieldCalculatorMagnetic <config_file.xml> <Computation Mode> <Input File> <Write output file (0,1)> <field_name1> [<field_name2> <...>] " << endl << endl;
 
     if (argc < 4) {
         cout << "Missing arguments, program stopped!" << endl;
@@ -96,10 +96,10 @@ int main(int argc, char** argv)
             startOnAxis,
             endOnAxis
         );
-        pointSets.push_back( fieldOnAxis );
+        //pointSets.push_back( fieldOnAxis );
 
         // Comparison 1: r=5cm, near z=0, myScale = 1e7 points:
-        const uint64 scaleComp1OffAxis( myScale/100 );
+        const uint64 scaleComp1OffAxis( myScale );
         const short dimensionComp1OffAxis( myDimension );
         const KThreeVector startComp1OffAxis(0., 0.05, -0.025);
         const KThreeVector endComp1OffAxis(0., 0.05, 0.025);
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
             startComp1OffAxis,
             endComp1OffAxis
         );
-        //pointSets.push_back( fieldComp1OffAxis );
+        pointSets.push_back( fieldComp1OffAxis );
 
         // Comparison 1: r=9.5cm, near coils, myScale = 1e7 points:
         const uint64 scaleComp1Remote( myScale );
@@ -187,13 +187,10 @@ int main(int argc, char** argv)
     Converter >> writeToFiles;
     mainmsg( eDebug ) << "writeToFiles: " << writeToFiles << eom;
 
-    // initialitzing variables for measurement of computation times
+    // initializing variables for measurement of computation times
     uint64 tStartTime( 0 );
     uint64 tStopTime( 0 );
     uint64 tTimeSum( 0 );
-
-#ifdef MAGNETIC
-#if MAGNETIC == 1
 
     // -----------------------
     // init of magnetic fields
@@ -212,16 +209,10 @@ int main(int argc, char** argv)
     KThreeVector tMagneticField;
     // TODO: KThreeMatrix tMagneticFieldGradient;
 
-#endif
-#endif
+////////////////////////////////////////////////////////////
+// Computation of field points along field lines (mode 3) //
+////////////////////////////////////////////////////////////
 
-// TODO: KThreeVector tElectricField
-
-/////////////////
-// Field lines //
-/////////////////
-
-// mode = 3 : compute field along field line
 if( tMode==3 )
 {
     pointSets.clear();
@@ -274,7 +265,7 @@ if( tMode==3 )
                 tStartTime = GetTimeMs64();
 
                 tFieldObject->CalculateField(tFieldPoint, 0.0, tMagneticField);
-                //tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
+                // TODO: tFieldObject->CalculateFieldAndGradient(P,0.0,tMagneticField,tMagneticFieldGradient);
                 mainmsg( eDebug )  << "(i), size: " << i << fieldGen.theResultVector.size()  << eom;
 
                 tStopTime = GetTimeMs64();
@@ -298,7 +289,7 @@ if( tMode==3 )
         
         pointSets.push_back( fieldGen );
 
-        mainmsg(eNormal) << "> END: Elapsed time for field <" << tFieldObject->GetName() << "> and config " << fieldGen.GetName() << " with " << fieldGen.theResultVector.size() << " values is <" << tTimeSum << "> ms " << eom;
+        mainmsg(eNormal) << "> END: Elapsed time for field object <" << tFieldObject->GetName() << "> and config " << fieldGen.GetName() << " with " << fieldGen.theResultVector.size() << " values is <" << tTimeSum << "> ms " << eom;
         mainmsg(eNormal) << eom;
 
         // n.b. for magfield coils the count of computed field points field and used
@@ -321,7 +312,7 @@ if( tMode==3 )
                 mainmsg(eError) << "Fehler: Konnte Datei " << string(fieldGen.GetName()+".csv") << " nicht oeffnen!" << eom;
                 return 1;
             }
-            file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
+            file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "Bmag" << endl;
 
             for (unsigned int m = 0; m < fieldGen.theResultVector.size(); m++) {
                 file1 << m << "\t" << std::scientific << std::setprecision( myPrecision )
@@ -343,6 +334,10 @@ if( tMode==3 )
  } // if-mode 3 (field lines)
 
 if( tMode==3 ) goto label;
+
+////////////////////////////////////////////////
+// Field point calculation (modes 0, 1 and 2) //
+////////////////////////////////////////////////
 
     // ----------------------------------
     // for-loop over tFieldObjects
@@ -395,7 +390,7 @@ if( tMode==3 ) goto label;
 
             } // for - field single point set
             
-            mainmsg(eNormal) << "> Elapsed time for field <" << tFieldObject->GetName() << "> and config " << it1PointSets.GetName() << " with " << it1PointSets.theResultVector.size() << " values is <" << tTimeSum << "> ms " << eom;
+            mainmsg(eNormal) << "> Elapsed time for field object <" << tFieldObject->GetName() << "> and config " << it1PointSets.GetName() << " with " << it1PointSets.theResultVector.size() << " values is <" << tTimeSum << "> ms " << eom;
             mainmsg(eNormal) << eom;
 
             // n.b. for magfield coils the count of computed field points field and used
@@ -420,7 +415,7 @@ if( tMode==3 ) goto label;
                     mainmsg(eError) << "Fehler: Konnte Datei " << string(it1PointSets.GetName()+".csv") << " nicht oeffnen!" << eom;
                     return 1;
                 }
-                file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "absB" << endl;
+                file1 << "Id" << "\t" << "x" << "\t" << "y" << "\t" << "z" << "\t" << "Bx" << "\t" << "By" << "\t" << "Bz" << "\t" << "Bmag" << endl;
 
                 for( unsigned int m = 0; m < it1PointSets.theResultVector.size(); m++ ) {
                     file1 << m << "\t" << std::scientific << std::setprecision( myPrecision )

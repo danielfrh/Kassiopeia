@@ -20,6 +20,7 @@ using namespace std;
 struct tResult{
     KThreeVector myPosition;
     KThreeVector myField;
+    double myPotential;
 };
 
 
@@ -318,6 +319,14 @@ class FieldPointGenerator{
             temp.myField.SetComponents( inputField );
             theResultVector.push_back( temp );
             //theResultVector.emplace_back(tResult{inputPos, inputField});
+        };
+
+        void SetPositionAndFieldAndPotentialToResultVector( const KThreeVector& inputPos, const KThreeVector& inputField, const double& inputPotential ) {
+            tResult temp;
+            temp.myPosition.SetComponents( inputPos );
+            temp.myField.SetComponents( inputField );
+            temp.myPotential = inputPotential;
+            theResultVector.push_back( temp );
         };
         
         std::vector<tResult> theResultVector;
