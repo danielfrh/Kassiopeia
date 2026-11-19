@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-
-# Script is compatible to output from FieldCalculator_Electric and FieldCalculator_Magnetic.
-
-# Study field lines on lines as calculated and stored by Application FieldCalculator
-# N.b. Plotting heat maps hasn't been implemented yet.
+# Study field points of magnitude of electric field (E_mag) on lines as calculated and
+# stored by Application FieldCalculator_Electric with relative w.r.t. first input 
 
 
 import pandas as pd
@@ -33,7 +30,6 @@ for eachArg in sys.argv:
 
 # Defining the columns to read
 titles = ["Id","x","y","z","Ex","Ey","Ez","Emag","Pot"]
-
 # Daten einlesen
 # header=0  bedeutet: Die erste Zeile der Datei (Index 0) enthält die Spaltennamen.
 # names=titles  bedeutet: Ignoriere Spaltennamen aus der Datei und verwende diese hier.
@@ -63,8 +59,8 @@ plot_df = j.sort_values("z_1")
 plt.figure(figsize=(7,4))
 plt.plot(plot_df["z_1"], plot_df["dEmagRel"], lw=1)
 plt.xlabel("z")
-plt.ylabel("ΔEmag/Emag_1 = (Emag_1 - Emag_2)/Emag_1")
-plt.title("Relative Error |ΔEmag|/Emag_1 against z-coordinate")
+plt.ylabel("|ΔEmag|/Emag_1 = (Emag_1 - Emag_2)/Emag_1")
+plt.title("Relative Error ΔEmagRel against z-coordinate")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
