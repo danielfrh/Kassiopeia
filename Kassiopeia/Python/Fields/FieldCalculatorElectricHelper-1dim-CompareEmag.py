@@ -32,7 +32,7 @@ for eachArg in sys.argv:
         print(eachArg)
 
 # Defining the columns to read
-titles = ["Id","x","y","z","Bx","By","Bz","absB"]
+titles = ["Id","x","y","z","Ex","Ey","Ez","Emag","Pot"]
 
 # Daten einlesen
 # header=0  bedeutet: Die erste Zeile der Datei (Index 0) enthält die Spaltennamen.
@@ -45,7 +45,7 @@ except ValueError as e:
     print(f"Error: {e}")
 
 try:
-    df2 = pd.read_csv(dateipfad1, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Ex": float, "Ey": float, "Ez": float, "Emag": float, "Pot": float}, skipinitialspace=True)
+    df2 = pd.read_csv(dateipfad2, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Ex": float, "Ey": float, "Ez": float, "Emag": float, "Pot": float}, skipinitialspace=True)
     print( df2 )
 except ValueError as e:
     print(f"Error: {e}")
@@ -54,7 +54,7 @@ cols = ["x","y","z","Ex","Ey","Ez","Emag","Pot"]
 j = df1[cols].join(df2[cols], how="inner", lsuffix="_1", rsuffix="_2")
 
 # Definition of relative error: df1 - df2) / df1
-j["dEmagRel"] = (( j["Emag_1"] - j["Emag_2"] ) / j["Emag_1"]).abs()
+j["dEmagRel"]=((j["Emag_1"]-j["Emag_2"] )/j["Emag_1"]).abs()
 
 # 2) Plot: z auf x-Achse, Differenz auf y-Achse
 # robust: nach z sortieren (falls Id nicht monoton in z ist)
@@ -64,7 +64,7 @@ plt.figure(figsize=(7,4))
 plt.plot(plot_df["z_1"], plot_df["dEmagRel"], lw=1)
 plt.xlabel("z")
 plt.ylabel("ΔEmag/Emag_1 = (Emag_1 - Emag_2)/Emag_1")
-plt.title("Relative Error of magnitude of electric field wrt. Emag_1 against z-coordinate")
+plt.title("Relative Error |ΔEmag|/Emag_1 against z-coordinate")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
@@ -78,7 +78,6 @@ print("\nMaximal relative error |ΔEmag|/dE_1 found at Id =", idx)
 print("z =", row["z_1"], " (x,y,z) = (", row["x_1"], ",", row["y_1"], ",", row["z_1"], ")")
 print("Emag_1 =", row["Emag_1"])
 print("Emag_2 =", row["Emag_2"])
-print("ΔEmag  =", row["dEmag"])
 print("|ΔEmag/Emag_1|=", abs(row["dEmagRel"]))
 
 # Alle zugehörigen Feldkomponenten:
