@@ -445,7 +445,7 @@ if( tMode==3 ) goto label;
                     << it1PointSets.theResultVector[m].myField[1] << "\t"
                     << it1PointSets.theResultVector[m].myField[2] << "\t"
                     << it1PointSets.theResultVector[m].myField.Magnitude() << "\t"
-                    << it1PointSets.theResultVector[m].myPotential << "\t";
+                    << it1PointSets.theResultVector[m].myPotential << "\n";
                 }
 
                 outputFile->Close();
@@ -457,8 +457,8 @@ if( tMode==3 ) goto label;
 label:
 
     for (size_t tIndex = 3; tIndex < tParameters.size(); tIndex++) {
-        KSMagneticField* tMagneticFieldObject = getMagneticField(tParameters[tIndex]);
-        tMagneticFieldObject->Deinitialize();
+        KSElectricField* tElectricFieldObject = getElectricField(tParameters[tIndex]);
+        tElectricFieldObject->Deinitialize();
     }
 
     return 0;
