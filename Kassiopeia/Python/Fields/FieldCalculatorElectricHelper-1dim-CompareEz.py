@@ -1,7 +1,33 @@
 #!/usr/bin/env python3
 
-# Study field points of z-component of electric field (E_z) on lines as calculated and
-# stored by Application FieldCalculator_Electric with relative w.r.t. first input 
+# Study electric field in z-direction Ez(z) at running z-coordinate as calculated and
+# both stored in csv files by application FieldCalculator_Electric.
+#
+# The script takes as start parameter the location of the two files to be compared as input.
+# Here, the first input file is taken as reference potential U_1(z)!
+#
+# >> Start on terminal with:
+# 'python3 FieldCalculatorElectricHelper-1dim-ComparePotential.py fileWithU1.csv fileWithU2.csv'
+#
+# The output is of this script is a graph illustrating the relative error of the electric
+# potential:
+# dUrel(z) = abs( U_2(z) - U_1(z) ) / abs( U_1(z) )
+#
+# Please note:
+#
+# * Only the relative error will be evaluated in the following script.
+# * The absolute error measures the size of the difference between the estimated / measured value
+#   and the true value (reference value): dE_absolute = abs( x_measured - x_ref )
+# * The relative error expresses this difference as a percentage of the true / reference value:
+#   dE_relative = dE_absolute / abs( x_ref )
+# * The script can easily be changed to plot the absolute error, too (cf. l. 80f.).
+#
+# Since potential and field quentities can be negative, the corresponding absolute value will be
+# taken in order to obtain an absolute value for the error.
+#
+# From:
+# https://www.geeksforgeeks.org/maths/absolute-error-and-relative-error-formula-and-equation/
+# https://www.vedantu.com/maths/absolute-and-relative-error
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -23,13 +49,14 @@ dateipfad2 = sys.argv[2]
 #ort/ koordinaten des maximalen fehlers
 
 if len(sys.argv) != 3:
-    print("Aufruf: python script.py datei1.csv datei2.csv")
+    print("Aufruf: python3 script.py datei1.csv datei2.csv")
     sys.exit(1)
 for eachArg in sys.argv:
         print(eachArg)
 
 # Defining the columns to read
 titles = ["Id","x","y","z","Ex","Ey","Ez","Emag","Pot"]
+
 # Daten einlesen
 # header=0  bedeutet: Die erste Zeile der Datei (Index 0) enthält die Spaltennamen.
 # names=titles  bedeutet: Ignoriere Spaltennamen aus der Datei und verwende diese hier.
@@ -49,17 +76,18 @@ except ValueError as e:
 cols = ["x","y","z","Ex","Ey","Ez","Emag","Pot"]
 j = df1[cols].join(df2[cols], how="inner", lsuffix="_1", rsuffix="_2")
 
-# Definition of relative error: df1 - df2) / df1
-j["dEzRel"] = ((j["Ez_1"] - j["Ez_2"])/j["Ez_1"]).abs()
+# Definition of relative and absolute error explained on top
+j["dEzAbs"] = (j["Ez_2"] - j["Ez_1"]).abs()
+j["dEzRel"] = ( j["dEzAbs"] / ( j["Ez_1"]).abs() )
 
 # 2) Plot: z auf x-Achse, Differenz auf y-Achse
 # robust: nach z sortieren (falls Id nicht monoton in z ist)
 plot_df = j.sort_values("z_1")
 
 plt.figure(figsize=(7,4))
-plt.plot(plot_df["z_1"], plot_df["dEzrel"], lw=1)
+plt.plot(plot_df["z_1"], plot_df["dEzRel"], lw=1)
 plt.xlabel("z")
-plt.ylabel("|ΔEz|/Ez_1 = (Ez_1 - Ez_2)/Ez_1")
+plt.ylabel("|ΔEz|/|Ez_1| = |Ez_2 - Ez_1|/|Ez_1|")
 plt.title("Relative Error ΔEzRel against z-coordinate")
 plt.grid(True)
 plt.tight_layout()
@@ -67,14 +95,15 @@ plt.show()
 
 # 3) Maximal relative error
 # meist sinnvoll: maximale *Betrags*-Differenz
-idx = j["dEzRel"].abs().idxmax()        # Id (Index)
+idx = j["dEzRel"].idxmax()
+# Id (Index)
 row = j.loc[idx]
 
-print("\nMaximal relative error |ΔEz|/dE_1 found at Id =", idx)
+print("\nMaximal relative error |ΔEz|/|Ez_1| found at Id =", idx)
 print("z =", row["z_1"], " (x,y,z) = (", row["x_1"], ",", row["y_1"], ",", row["z_1"], ")")
 print("Ez_1 =", row["Ez_1"])
 print("Ez_2 =", row["Ez_2"])
 print("|ΔEz/Ez_1|=", abs(row["dEzRel"]))
 
 # Alle zugehörigen Feldkomponenten:
-print(row[["x_1","y_1","z_1","Bx_1","By_1","Bz_1","Bx_2","By_2","Bz_2","dBz"]])
+print(row[["x_1","y_1","z_1","Ex_1","Ey_1","Ez_1","Emag_1","Pot_1","Ex_2","Ey_2","Ez_2","Emag_2","Pot_2","dEzRel"]])
