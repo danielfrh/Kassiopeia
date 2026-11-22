@@ -1,9 +1,33 @@
 #!/usr/bin/env python3
 
-# Compare given field points (z-component of magnetic field B_z) of two field simulations 
-# as calculated and stored by Application FieldCalculatorMagnetic
-
-# arguments of script: file name of field points of magnetic field 1 and file name of field points of magnetic field 1 
+# Study magnetic field in z-direction Bz(z) at running z-coordinate as calculated and
+# both stored in csv files by application FieldCalculator_Magnetic.
+#
+# The script takes as start parameter the location of the two files to be compared as input.
+# Here, the first input file is taken as reference potential U_1(z)!
+#
+# >> Start on terminal with:
+# 'python3 FieldCalculatorMagneticHelper-1dim-CompareEmag.py fileWithBmag1.csv fileWithBmag2.csv'
+#
+# The output is of this script is a graph illustrating the relative error of the electric
+# potential:
+# dBzRel(z) = abs( Bz_2(z) - Bz_1(z) ) / abs( Bz_1(z) )
+#
+# Please note:
+#
+# * Only the relative error will be plotted in the following script, but the script
+#   can easily be changed to plot the absolute error, too (cf. l. 80f.).
+# * The absolute error measures the size of the difference between the estimated / measured value
+#   and the true value (reference value): dE_absolute = abs( x_measured - x_ref )
+# * The relative error expresses this difference as a percentage of the true / reference value:
+#   dE_relative = dE_absolute / abs( x_ref )
+#
+# Since potential and field quentities can be negative, the corresponding absolute value will be
+# taken in order to obtain an absolute value for the error.
+#
+# From:
+# https://www.geeksforgeeks.org/maths/absolute-error-and-relative-error-formula-and-equation/
+# https://www.vedantu.com/maths/absolute-and-relative-error
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -25,60 +49,60 @@ dateipfad2 = sys.argv[2]
 #ort/ koordinaten des maximalen fehlers
 
 if len(sys.argv) != 3:
-    print("Aufruf: python script.py datei1.csv datei2.csv")
+    print("Aufruf: python3 script.py datei1.csv datei2.csv")
     sys.exit(1)
 for eachArg in sys.argv:
         print(eachArg)
 
 # Defining the columns to read
-titles = ["Id","x","y","z","Bx","By","Bz","absB"]
+titles = ["Id","x","y","z","Bx","By","Bz","Bmag"]
 
 # Daten einlesen
 # header=0  bedeutet: Die erste Zeile der Datei (Index 0) enthält die Spaltennamen.
 # names=titles  bedeutet: Ignoriere Spaltennamen aus der Datei und verwende diese hier.
 
 try:
-    df1 = pd.read_csv(dateipfad1, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Bx": float, "By": float, "Bz": float, "absB": float}, skipinitialspace=True)
+    df1 = pd.read_csv(dateipfad1, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Bx": float, "By": float, "Bz": float, "Bmag": float}, skipinitialspace=True)
     print( df1 )
 except ValueError as e:
     print(f"Error: {e}")
 
 try:
-    df2 = pd.read_csv(dateipfad2, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Bx": float, "By": float, "Bz": float, "absB": float}, skipinitialspace=True)
+    df2 = pd.read_csv(dateipfad2, sep='\t', header=0, index_col="Id", usecols=titles, dtype={"Id": np.int64, "x": float, "y": float, "z": float, "Bx": float, "By": float, "Bz": float, "Bmag": float}, skipinitialspace=True)
     print( df2 )
 except ValueError as e:
     print(f"Error: {e}")
 
-cols = ["x","y","z","Bx","By","Bz","absB"]
+cols = ["x","y","z","Bx","By","Bz","Bmag"]
 j = df1[cols].join(df2[cols], how="inner", lsuffix="_1", rsuffix="_2")
 
-# Relative error: (df1 - df2) / df1 wrt first input
-j["dBzBz1"] = (j["Bz_1"] - j["Bz_2"])/j["Bz_1"]
+# Definition of relative and absolute error explained on top
+j["dBzAbs"] = (j["Bz_2"] - j["Bz_1"]).abs()
+j["dBzRel"] = ( j["dBzAbs"] / ( j["Bz_1"]).abs() )
 
 # 2) Plot z-component on x-axis, rel. error on y-axis
 # robust: sort with z-component (in the case Id is not monotone against z-component)
 plot_df = j.sort_values("z_1")
 
 plt.figure(figsize=(7,4))
-plt.plot(plot_df["z_1"], plot_df["dBzBz1"], lw=1)
+plt.plot(plot_df["z_1"], plot_df["dBzRel"], lw=1)
 plt.xlabel("z")
-plt.ylabel("ΔBz/Bz_1 = (Bz_1 - Bz_2)/Bz_1")
-plt.title("Relative Error ΔBz/Bz_1 over z")
+plt.ylabel("|ΔBz|/|Bz_1| = |Bz_2 - Bz_1|/|Bz_1|")
+plt.title("Relative Error ΔBzRel against z-coordinate")
 plt.grid(True)
 plt.tight_layout()
 plt.show()
 
 # 3) Maximal relative error
-# meist sinnvoll: maximale *Betrags*-Differenz
-idx = j["dBzBz1"].abs().idxmax()        # Id (Index)
+idx = j["dBzRel"].idxmax()
+# Id (Index)
 row = j.loc[idx]
 
-print("\nMaximal relative error |ΔBz|/dBzBz1 found at Id =", idx)
+print("\nMaximal relative error |ΔBz|/dBz_1 found at Id =", idx)
 print("z =", row["z_1"], " (x,y,z) = (", row["x_1"], ",", row["y_1"], ",", row["z_1"], ")")
 print("Bz_1 =", row["Bz_1"])
 print("Bz_2 =", row["Bz_2"])
-print("ΔBz/Bz_1  =", row["dBzBz1"])
-print("|ΔBz/Bz_1|=", abs(row["dBzBz1"]))
+print("|ΔBz|/|Bz_1|=", row["dBzRel"])
 
 # Alle zugehörigen Feldkomponenten:
-print(row[["x_1","y_1","z_1","Bx_1","By_1","Bz_1","Bx_2","By_2","Bz_2","dBz"]])
+print(row[["x_1","y_1","z_1","Bx_1","By_1","Bz_1","Bmag_1","Bx_2","By_2","Bz_2","Bmag_2","dBzRel"]])

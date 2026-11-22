@@ -11,16 +11,16 @@
 #
 # The output is of this script is a graph illustrating the relative error of the electric
 # potential:
-# dEmagrel(z) = abs( Emag_2(z) - Emag_1(z) ) / abs( Emag_1(z) )
+# dEmagEel(z) = abs( Emag_2(z) - Emag_1(z) ) / abs( Emag_1(z) )
 #
 # Please note:
 #
-# * Only the relative error will be evaluated in the following script.
+# * Only the relative error will be plotted in the following script, but the script
+#   can easily be changed to plot the absolute error, too (cf. l. 80f.).
 # * The absolute error measures the size of the difference between the estimated / measured value
 #   and the true value (reference value): dE_absolute = abs( x_measured - x_ref )
 # * The relative error expresses this difference as a percentage of the true / reference value:
 #   dE_relative = dE_absolute / abs( x_ref )
-# * The script can easily be changed to plot the absolute error, too (cf. l. 80f.).
 #
 # Since potential and field quentities can be negative, the corresponding absolute value will be
 # taken in order to obtain an absolute value for the error.
